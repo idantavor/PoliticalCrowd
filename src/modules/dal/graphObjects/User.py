@@ -12,6 +12,7 @@ class User(GraphObject):
     job = Property(key="job")
     birthYear = Property(key="birthYear")
     residency = Property(key="residency")
+    involvmentLevel = Property(key="involvmentLevel")
 
     associate_party = RelatedTo(Party)
     voted_for = RelatedTo(Law)

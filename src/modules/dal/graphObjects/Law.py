@@ -8,7 +8,7 @@ class Law(GraphObject):
     __primarykey__ = "name"
 
     name = Property()
-    date = Property(key="date")
+    timestamp = Property(key="timestamp")
     status = Property(key="status")
     description = Property()
     link = Property()
