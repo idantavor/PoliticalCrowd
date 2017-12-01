@@ -1,8 +1,7 @@
 from py2neo.ogm import *
-from Relations import *
 
-class Party(GraphObject):
-    __primarykey__ = "name"
+
+
 
 
 class Law(GraphObject):
@@ -17,7 +16,7 @@ class User(GraphObject):
     age = Property()
 
     party = RelatedFrom(Party, )
-    lawsFor = RelatedTo(Law)
+    lawsFor = RelatedFrom(Law)
     lawsAgaints = RelatedTo(Law)
 
 
