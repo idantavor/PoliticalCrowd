@@ -14,7 +14,7 @@ class Law(GraphObject):
     link = Property()
 
     user_voted_for = RelatedFrom("User", VOTED_FOR)
-    user_voted_against   = RelatedFrom("User", VOTED_AGAINST)
+    user_voted_against = RelatedFrom("User", VOTED_AGAINST)
 
     elected_voted_for_first = RelatedTo(ElectedOfficials)
     elected_voted_for_second = RelatedTo(ElectedOfficials)
