@@ -25,7 +25,7 @@ def initDb():
     graph.begin(autocommit=True)
     graph.delete_all()
 
-    #creation of graph objects
+    #creation of graph objects 
     ofer = User.createUser(token="1", job="הייטק", birthYear=1989, involvmentLevel="low", residancy="תל אביב")
     likud = Party.createParty(name="ליכוד", agenda="להיות חארות")
     orenHazan = ElectedOfficial.createElectedOfficial(name="אורן חזן", active=True, title="חבר כנסת")
