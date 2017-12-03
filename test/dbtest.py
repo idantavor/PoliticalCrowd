@@ -1,23 +1,20 @@
 import datetime
 import time
-from py2neo import Graph, NodeSelector
+from py2neo import Graph
 
 
 from modules.dal.graphObjects.graphObjects import User
 from modules.dal.graphObjects.graphObjects import Party
 from modules.dal.graphObjects.graphObjects import ElectedOfficial
 from modules.dal.graphObjects.graphObjects import Law
-from modules.dal.relations.Relations import VOTED_FOR, VOTED_AGAINST, ELECTED_VOTED_FOR_FIRST, ELECTED_VOTED_FOR_SECOND, \
-    ELECTED_VOTED_FOR_THIRD, ELECTED_VOTED_AGAINST_FIRST, ELECTED_VOTED_AGAINST_SECOND, ELECTED_VOTED_AGAINST_THIRD, \
-    ELECTED_ABSTAINED_FIRST, ELECTED_ABSTAINED_SECOND, ELECTED_ABSTAINED_THIRD, ELECTED_MISSING_FIRST, \
-    ELECTED_MISSING_SECOND, ELECTED_MISSING_THIRD, ASSOCIATE_PARTY
-
 
 def http_connect():
     return Graph("http://127.0.0.1:7474/db/data/", password="12345")
+    #return Graph("http://5.29.28.68:7474/db/data/", username="neo4j", password="bibikiller")
 
 def bolt_connect():
-    return Graph("bolt://127.0.0.1:7687/db/data/", password="12345")
+    return Graph("bolt://127.0.0.1:7687/db/data/",password="12345")
+    #return Graph("bolt://5.29.28.68:7687/db/data/", username="neo4j", password="bibikiller")
 
 
 def initDb():
@@ -98,7 +95,7 @@ def relatedToQueries():
 #initDb()
 #selectionObjectPrints()
 #relatedFromQueries()
-relatedToQueries()
+#relatedToQueries()
 
 
 
