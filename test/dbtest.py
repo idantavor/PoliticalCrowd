@@ -25,7 +25,7 @@ def initDb():
     graph.begin(autocommit=True)
     graph.delete_all()
 
-    #creation of graph objects 
+    #creation of graph objects
     ofer = User.createUser(token="1", job="הייטק", birthYear=1989, involvmentLevel="low", residancy="תל אביב")
     likud = Party.createParty(name="ליכוד", agenda="להיות חארות")
     orenHazan = ElectedOfficial.createElectedOfficial(name="אורן חזן", active=True, title="חבר כנסת")
@@ -74,6 +74,23 @@ def relatedFromQueries():
     for k in ss:
         print(k)
 
+def relatedToQueries():
+    graph = bolt_connect()
+    ofer = User.select(graph, primary_value="1").first()
+    print("parties ofer selected (can't enforce only 1 by neo4j)")
+    for k in ofer.associate_party:
+        print(k.name)
+        print(k.agenda)
+
+    k = list(ofer.voted_against)[0]
+    print(k.name +" users token voted for:")
+    for s  in k.user_voted_for:
+        print(s.token)
+    print("-------")
+    print(k.name + " users voted against:")
+    for s  in k.user_voted_against:
+        print(s.token)
+
 
 
 # enable all for first time test
@@ -81,6 +98,7 @@ def relatedFromQueries():
 #initDb()
 #selectionObjectPrints()
 #relatedFromQueries()
+relatedToQueries()
 
 
 

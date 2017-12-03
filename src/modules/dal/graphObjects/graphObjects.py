@@ -6,51 +6,62 @@ from modules.dal.relations.Relations import VOTED_FOR, VOTED_AGAINST, ELECTED_VO
     ELECTED_MISSING_SECOND, ELECTED_MISSING_THIRD, ASSOCIATE_PARTY, MEMBER_OF_PARTY
 
 
-# dummy classes because no forward decleration!
+class Party(GraphObject):
+    __primarykey__ = "name"
 
-class Party:
-    def __init__(self):
-        pass
+    name = Property()
+    agenda = Property()
 
-
-class Law:
-    def __init__(self):
-        pass
-
-
-class ElectedOfficial:
-    def __init__(self):
-        pass
-
-
-# end dummy classes
-
-class User(GraphObject):
-    __primarykey__ = "token"
-
-    token = Property()
-    job = Property(key="job")
-    birthYear = Property(key="birthYear")
-    residency = Property(key="residency")
-    involvmentLevel = Property(key="involvmentLevel")
-
-    associate_party = RelatedTo(Party)
-    voted_for = RelatedTo(Law)
-    voted_against = RelatedTo(Law)
-    member_follows = RelatedTo(ElectedOfficial)
+    user_follows = RelatedFrom("User", ASSOCIATE_PARTY)
+    party_members = RelatedFrom("ElectedOfficial", MEMBER_OF_PARTY)
 
     @classmethod
-    def createUser(cls, token, job, birthYear, residancy, involvmentLevel):
+    def createParty(cls, name, agenda):
+        party = cls()
+        party.name = name
+        party.agenda = agenda
+        return party
+
+    def __str__(self, *args, **kwargs):
+        return self.__ogm__.node.__str__()
+
+
+class ElectedOfficial(GraphObject):
+    __primarykey__ = "name"
+
+    name = Property()
+    active = Property(key="active")
+    title = Property()
+
+    member_of_party = RelatedTo(Party)
+
+    voted_for_first = RelatedFrom("Law", ELECTED_VOTED_FOR_FIRST)
+    voted_for_second = RelatedFrom("Law", ELECTED_VOTED_FOR_SECOND)
+    voted_for_third = RelatedFrom("Law", ELECTED_VOTED_FOR_THIRD)
+
+    voted_against_first = RelatedFrom("Law", ELECTED_VOTED_AGAINST_FIRST)
+    voted_against_second = RelatedFrom("Law", ELECTED_VOTED_AGAINST_SECOND)
+    voted_against_third = RelatedFrom("Law", ELECTED_VOTED_AGAINST_THIRD)
+
+    abstained_first = RelatedFrom("Law", ELECTED_ABSTAINED_FIRST)
+    abstained_second = RelatedFrom("Law", ELECTED_ABSTAINED_SECOND)
+    abstained_third = RelatedFrom("Law", ELECTED_ABSTAINED_THIRD)
+
+    missing_first = RelatedFrom("Law", ELECTED_MISSING_FIRST)
+    missing_second = RelatedFrom("Law", ELECTED_MISSING_SECOND)
+    missing_third = RelatedFrom("Law", ELECTED_MISSING_THIRD)
+
+    @classmethod
+    def createElectedOfficial(cls, name, active, title):
         ret = cls()
-        ret.token = token
-        ret.job = job
-        ret.birthYear = birthYear
-        ret.residency = residancy
-        ret.involvmentLevel = involvmentLevel
+        ret.name = name
+        ret.active = active
+        ret.title = title
         return ret
 
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
+
 
 
 class Law(GraphObject):
@@ -97,58 +108,30 @@ class Law(GraphObject):
         return self.__ogm__.node.__str__()
 
 
-class ElectedOfficial(GraphObject):
-    __primarykey__ = "name"
+class User(GraphObject):
+    __primarykey__ = "token"
 
-    name = Property()
-    active = Property(key="active")
-    title = Property()
+    token = Property()
+    job = Property(key="job")
+    birthYear = Property(key="birthYear")
+    residency = Property(key="residency")
+    involvmentLevel = Property(key="involvmentLevel")
 
-    member_of_party = RelatedTo(Party)
-
-    voted_for_first = RelatedFrom("Law", ELECTED_VOTED_FOR_FIRST)
-    voted_for_second = RelatedFrom("Law", ELECTED_VOTED_FOR_SECOND)
-    voted_for_third = RelatedFrom("Law", ELECTED_VOTED_FOR_THIRD)
-
-    voted_against_first = RelatedFrom("Law", ELECTED_VOTED_AGAINST_FIRST)
-    voted_against_second = RelatedFrom("Law", ELECTED_VOTED_AGAINST_SECOND)
-    voted_against_third = RelatedFrom("Law", ELECTED_VOTED_AGAINST_THIRD)
-
-    abstained_first = RelatedFrom("Law", ELECTED_ABSTAINED_FIRST)
-    abstained_second = RelatedFrom("Law", ELECTED_ABSTAINED_SECOND)
-    abstained_third = RelatedFrom("Law", ELECTED_ABSTAINED_THIRD)
-
-    missing_first = RelatedFrom("Law", ELECTED_MISSING_FIRST)
-    missing_second = RelatedFrom("Law", ELECTED_MISSING_SECOND)
-    missing_third = RelatedFrom("Law", ELECTED_MISSING_THIRD)
+    associate_party = RelatedTo(Party)
+    voted_for = RelatedTo(Law)
+    voted_against = RelatedTo(Law)
+    member_follows = RelatedTo(ElectedOfficial)
 
     @classmethod
-    def createElectedOfficial(cls, name, active, title):
+    def createUser(cls, token, job, birthYear, residancy, involvmentLevel):
         ret = cls()
-        ret.name = name
-        ret.active = active
-        ret.title = title
+        ret.token = token
+        ret.job = job
+        ret.birthYear = birthYear
+        ret.residency = residancy
+        ret.involvmentLevel = involvmentLevel
         return ret
 
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
 
-
-class Party(GraphObject):
-    __primarykey__ = "name"
-
-    name = Property()
-    agenda = Property()
-
-    user_follows = RelatedFrom("User", ASSOCIATE_PARTY)
-    party_members = RelatedFrom("ElectedOfficial", MEMBER_OF_PARTY)
-
-    @classmethod
-    def createParty(cls, name, agenda):
-        party = cls()
-        party.name = name
-        party.agenda = agenda
-        return party
-
-    def __str__(self, *args, **kwargs):
-        return self.__ogm__.node.__str__()
