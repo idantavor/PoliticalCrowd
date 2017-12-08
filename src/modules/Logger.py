@@ -3,9 +3,9 @@ import logging
 FORMAT = "[%(filename)s:%(lineno)s - %(funcName)10s() ] %(message)s"
 logging.basicConfig(format=FORMAT)
 
-def getLogger(name):
+def getLogger(name, is_debug=False):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.DEBUG if is_debug else logging.INFO)
     return logger
 
 
