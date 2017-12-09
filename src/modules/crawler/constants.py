@@ -6,3 +6,7 @@ class LAW_OFFER_TYPE:
     PRIVATE="פרטית"
     COMITTEE="ועדה"
     GOVERNEMENT="ממשלתית"
+
+class LAW_PAGE_CONSTANTS :
+    DOCX_START_DELIMITER = "דברי הסבר"
+    DOCX_END_DELIMITER = "------------------------"
