@@ -10,3 +10,5 @@ class LAW_OFFER_TYPE:
 class LAW_PAGE_CONSTANTS :
     DOCX_START_DELIMITER = "דברי הסבר"
     DOCX_END_DELIMITER = "------------------------"
+    LAW_PAGE_QUERY_URL = "http://main.knesset.gov.il/Activity/Legislation/Laws/Pages/LawSuggestionsSearch.aspx?t=lawsuggestionssearch&st=currentknesset&wn={}&ki=20&sb=LatestSessionDate&so=D"
+    LAW_PAGE_URL   = "http://main.knesset.gov.il/Activity/Legislation/Laws/Pages/{}"
