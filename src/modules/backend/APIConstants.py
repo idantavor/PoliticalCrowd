@@ -6,6 +6,7 @@ JOB = "job"
 RESIDANCY = "residancy"
 PARTY = "party"
 INVOLVEMENT_LEVEL = "involvement_level"
+BLANK_TAG = "blankTag"
 
 class InvolvementLevel(Enum):
     LOW = 1
