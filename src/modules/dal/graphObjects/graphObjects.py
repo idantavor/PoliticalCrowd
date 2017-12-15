@@ -136,8 +136,8 @@ class Law(GraphObject):
         law.tags_votes = {} # TagName : {class votes-> upvotes, downvotes}
         return law
 
-    def tagVote(self, graph, tag_name, is_upvote=True):
-        if tag_name ==
+    # def tagVote(self, graph, tag_name, is_upvote=True):
+    #     if tag_name ==
 
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
