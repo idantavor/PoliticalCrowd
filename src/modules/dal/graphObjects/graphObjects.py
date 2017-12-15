@@ -4,7 +4,10 @@ from src.modules.dal.relations.Relations import VOTED_FOR, VOTED_AGAINST, ELECTE
     ELECTED_VOTED_FOR_SECOND, \
     ELECTED_VOTED_FOR_THIRD, ELECTED_VOTED_AGAINST_FIRST, ELECTED_VOTED_AGAINST_SECOND, ELECTED_VOTED_AGAINST_THIRD, \
     ELECTED_ABSTAINED_FIRST, ELECTED_ABSTAINED_SECOND, ELECTED_ABSTAINED_THIRD, ELECTED_MISSING_FIRST, \
-    ELECTED_MISSING_SECOND, ELECTED_MISSING_THIRD, ASSOCIATE_PARTY, MEMBER_OF_PARTY, TAGGED_AS, TAGGED_LAW
+    ELECTED_MISSING_SECOND, ELECTED_MISSING_THIRD, ASSOCIATE_PARTY, MEMBER_OF_PARTY, TAGGED_AS, TAGGED_LAW, WORK_AT, \
+    RESIDING
+
+from src.modules.dal.GraphConnection import *
 
 
 class Party(GraphObject):
@@ -71,6 +74,23 @@ class Tag(GraphObject):
     laws = RelatedFrom("Law", TAGGED_AS)
 
 
+class Votes(object):
+    def __init__(self):
+        self._upvotes = 0
+        self._downvotes = 0
+
+
+    def upvote(self):
+        self._upvotes += 1
+
+    def downvote(self):
+        self._downvotes += 1
+
+    def getScore(self):
+        return self._upvotes - self._downvotes
+
+
+
 class Law(GraphObject):
     __primarykey__ = "name"
 
@@ -79,6 +99,7 @@ class Law(GraphObject):
     status = Property(key="status")
     description = Property()
     link = Property()
+    tags_votes = Property()
 
     tags = RelatedTo(Tag)
     users_taged = RelatedFrom("User", TAGGED_LAW)
@@ -112,21 +133,37 @@ class Law(GraphObject):
         law.status = status
         law.description = description
         law.link = link
+        law.tags_votes = {} # TagName : {class votes-> upvotes, downvotes}
         return law
+
+    def tagVote(self, graph, tag_name, is_upvote=True):
+        if tag_name ==
 
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
+
+
+class JobCategory(GraphObject):
+    __primarykey__ = "name"
+
+    users = RelatedFrom("User", WORK_AT)
+
+
+class Residency(GraphObject):
+    __primarykey__ = "name"
+
+    users = RelatedFrom("User", RESIDING)
 
 
 class User(GraphObject):
     __primarykey__ = "token"
 
     token = Property()
-    job = Property(key="job")
     birthYear = Property(key="birthYear")
-    residency = Property(key="residency")
     involvmentLevel = Property(key="involvmentLevel")
 
+    residency = RelatedTo(Residency)
+    jobCategory = RelatedTo(JobCategory)
     associate_party = RelatedTo(Party)
     voted_for = RelatedTo(Law)
     voted_against = RelatedTo(Law)
@@ -134,14 +171,14 @@ class User(GraphObject):
     laws_tagged = RelatedTo(Law)
 
     @classmethod
-    def createUser(cls, token, job, birthYear, residancy, involvmentLevel):
-        ret = cls()
-        ret.token = token
-        ret.job = job
-        ret.birthYear = birthYear
-        ret.residency = residancy
-        ret.involvmentLevel = involvmentLevel
-        return ret
+    def createUser(cls, graph, token, job, birthYear, residancy, involvmentLevel, party):
+        user = cls()
+        user.token = token
+        user.birthYear = birthYear
+        user.involvmentLevel = involvmentLevel
+        user.associate_party = Party.select(graph, primary_value=party).first()
+        graph.begin(autocommit=True).push(user)
+        return user
 
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
