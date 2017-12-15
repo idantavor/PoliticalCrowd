@@ -2,6 +2,15 @@ from enum import Enum
 
 USER_TOKEN = "userToken"
 BIRTH_YEAR = "birthYear"
+JOB = "job"
+RESIDANCY = "residancy"
+PARTY = "party"
+INVOLVEMENT_LEVEL = "involvement_level"
+
+class InvolvementLevel(Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
 
 class Response(Enum):
     CODE_REQUEST_FAILED = 304

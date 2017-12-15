@@ -1,17 +1,17 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from py2neo import Graph
 
 from src.modules import Logger
 from src.modules.dal.graphObjects.graphObjects import User, Party
-from .APIConstants import *
+from src.modules.backend.APIConstants import *
+
 
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
 logger = Logger.getLogger("WebAPI", is_debug=True)
-graph = None
 
 def bolt_connect():
-    return Graph("bolt://127.0.0.1:7687/db/data/",password="12345")
+    return Graph("bolt://104.196.62.104:7687/db/data/",password="bibikiller")
 
 
 @app.errorhandler(Exception)
@@ -24,19 +24,27 @@ def defaultHandler(error):
 def isUserInSession(user):
     return 1
 
-@app.route("/getParties", method=['GET'])
+# api functions for first time login -- begin
+
+@app.route("/getParties", methods=['GET'])
 def getParties():
     graph = bolt_connect()
     parties = Party.select(graph)
     parties_names = []
     for party in parties:
         parties_names.append(party.name)
+    return jsonify(parties_names)
 
-    return jsonify()
+# getResidancies like parties
+
+# getJobCategories like parties
+
+# adding שמאל and ימין tags
 
 
 
-@app.route("/register", method=['POST'])
+
+@app.route("/register", methods=['POST'])
 def register():
     graph = bolt_connect()
     graph.begin(autocommit=True)
@@ -44,9 +52,9 @@ def register():
     user_token = request.form.get(USER_TOKEN)
     birth_year = request.form.get(BIRTH_YEAR)
     job = request.form.get(JOB)
-    city = request.form.get(CITY)
+    city = request.form.get(RESIDANCY)
     party = request.form.get(PARTY)
-    involvment = request.form.get(RESIDANCY)
+    involvment = InvolvementLevel[request.form.get(INVOLVEMENT_LEVEL)]
 
     new_user = User.createUser(token=user_token, birthYear=birth_year,
                                involvmentLevel=involvment, residancy=city,
@@ -56,7 +64,9 @@ def register():
 
     return Response.SUCCESSS, Response.CODE_SUCCESS
 
+# api functions for first time login  --- end
 
+app.run("127.0.0.1", 8080, debug=True)
 
 # Notification Screen
 # 1. law notification -> get user token, last update timestamp
