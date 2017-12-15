@@ -1,41 +1,60 @@
-from flask import Flask, request, session, redirect, url_for, render_template, flash
+from flask import Flask, request
+from py2neo import Graph
 
 from src.modules import Logger
-from src.modules.dal.graphObjects.graphObjects import User
+from src.modules.dal.graphObjects.graphObjects import User, Party
 from .APIConstants import *
-from flask.ext.session import Session
-import src.modules.dal.Logger
-from src.modules.dal.graphObjects import graphObjects
-from .CostumedExceptions import *
 
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
 logger = Logger.getLogger("WebAPI", is_debug=True)
+graph = None
 
+def bolt_connect():
+    return Graph("bolt://127.0.0.1:7687/db/data/",password="12345")
 
 
 @app.errorhandler(Exception)
 def defaultHandler(error):
     logger.error(str(error))
-    if type(error   )
+#    if type(error   )
+#        return 1
     return Response.FAILED, Response.CODE_FAILED
 
 def isUserInSession(user):
+    return 1
+
+@app.route("/getParties", method=['GET'])
+def getParties():
+    graph = bolt_connect()
+    parties = Party.select(graph)
+    parties_names = []
+    for party in parties:
+        parties_names.append(party.name)
+
+    return jsonify()
 
 
 
 @app.route("/register", method=['POST'])
 def register():
-    connection =
+    graph = bolt_connect()
+    graph.begin(autocommit=True)
+
     user_token = request.form.get(USER_TOKEN)
     birth_year = request.form.get(BIRTH_YEAR)
     job = request.form.get(JOB)
     city = request.form.get(CITY)
     party = request.form.get(PARTY)
-    involvment = request.form.get(INVOLVMENT)
+    involvment = request.form.get(RESIDANCY)
+
     new_user = User.createUser(token=user_token, birthYear=birth_year,
                                involvmentLevel=involvment, residancy=city,
                                job=job)
+    new_user.associate_party = Party.select(graph, primary_value=party).first()
+    graph.push(new_user)
+
+    return Response.SUCCESSS, Response.CODE_SUCCESS
 
 
 
