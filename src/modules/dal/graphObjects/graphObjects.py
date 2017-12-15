@@ -1,9 +1,10 @@
 from py2neo.ogm import *
 
-from src.modules.dal.relations.Relations import VOTED_FOR, VOTED_AGAINST, ELECTED_VOTED_FOR_FIRST, ELECTED_VOTED_FOR_SECOND, \
+from src.modules.dal.relations.Relations import VOTED_FOR, VOTED_AGAINST, ELECTED_VOTED_FOR_FIRST, \
+    ELECTED_VOTED_FOR_SECOND, \
     ELECTED_VOTED_FOR_THIRD, ELECTED_VOTED_AGAINST_FIRST, ELECTED_VOTED_AGAINST_SECOND, ELECTED_VOTED_AGAINST_THIRD, \
     ELECTED_ABSTAINED_FIRST, ELECTED_ABSTAINED_SECOND, ELECTED_ABSTAINED_THIRD, ELECTED_MISSING_FIRST, \
-    ELECTED_MISSING_SECOND, ELECTED_MISSING_THIRD, ASSOCIATE_PARTY, MEMBER_OF_PARTY
+    ELECTED_MISSING_SECOND, ELECTED_MISSING_THIRD, ASSOCIATE_PARTY, MEMBER_OF_PARTY, TAGGED_AS, TAGGED_LAW
 
 
 class Party(GraphObject):
@@ -63,6 +64,12 @@ class ElectedOfficial(GraphObject):
         return self.__ogm__.node.__str__()
 
 
+class Tag(GraphObject):
+    __primarykey__ = "name"
+
+    name = Property()
+    laws = RelatedFrom("Law", TAGGED_AS)
+
 
 class Law(GraphObject):
     __primarykey__ = "name"
@@ -72,6 +79,9 @@ class Law(GraphObject):
     status = Property(key="status")
     description = Property()
     link = Property()
+
+    tags = RelatedTo(Tag)
+    users_taged = RelatedFrom("User", TAGGED_LAW)
 
     user_voted_for = RelatedFrom("User", VOTED_FOR)
     user_voted_against = RelatedFrom("User", VOTED_AGAINST)
@@ -121,6 +131,7 @@ class User(GraphObject):
     voted_for = RelatedTo(Law)
     voted_against = RelatedTo(Law)
     member_follows = RelatedTo(ElectedOfficial)
+    laws_tagged = RelatedTo(Law)
 
     @classmethod
     def createUser(cls, token, job, birthYear, residancy, involvmentLevel):
@@ -134,4 +145,6 @@ class User(GraphObject):
 
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
+
+
 
