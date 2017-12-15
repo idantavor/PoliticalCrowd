@@ -1,17 +1,16 @@
 from flask import Flask, request, jsonify
-from py2neo import Graph
 
+from modules.dal.GraphConnection import bolt_connect
 from src.modules import Logger
-from src.modules.dal.graphObjects.graphObjects import User, Party
 from src.modules.backend.APIConstants import *
+from src.modules.dal.graphObjects.graphObjects import User, Party
 
 
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
 logger = Logger.getLogger("WebAPI", is_debug=True)
 
-def bolt_connect():
-    return Graph("bolt://104.196.62.104:7687/db/data/",password="bibikiller")
+
 
 
 @app.errorhandler(Exception)
