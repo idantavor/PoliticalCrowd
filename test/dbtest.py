@@ -23,7 +23,7 @@ def initDb():
     graph.delete_all()
 
     #creation of graph objects
-    ofer = User.createUser(token="1", job="הייטק", birthYear=1989, involvmentLevel="low", residancy="תל אביב")
+    ofer = User.createUser(token="1", job="הייטק", birthYear=1989, involvementLevel="low", residancy="תל אביב")
     likud = Party.createParty(name="ליכוד", agenda="להיות חארות")
     orenHazan = ElectedOfficial.createElectedOfficial(name="אורן חזן", active=True, title="חבר כנסת")
     stupid_law = Law.createLaw(name="חוק דבילי", link="www.fuckme.com", status="FIRST_CALL", timestamp=datetime.datetime.now().__str__(), description="חוק דבילי")

@@ -8,12 +8,12 @@ from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOffici
 
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
-logger = Logger.getLogger("WebAPI", is_debug=True)
+
 graph = bolt_connect()
 
 @app.errorhandler(Exception)
 def defaultHandler(error):
-    logger.error(str(error))
+    app.logger.error(str(error))
 #    if type(error   )
 #        return 1
     return Response.FAILED, Response.CODE_FAILED
@@ -25,19 +25,22 @@ def isUserInSession(user):
 
 @app.route("/getParties", methods=['GET'])
 def getParties():
-
+    app.logger.debug("got parties request")
     parties = Party.select(graph)
     parties_names = []
     for party in parties:
         parties_names.append(party.name)
+    app.logger.debug("returning "+str(parties_names))
     return jsonify(parties_names)
 
 @app.route("/getElectedOfficials", methods=['GET'])
 def getElectedOfficials():
+    app.logger.debug("got elected officials request")
     elected_officials = ElectedOfficial.select(graph)
     elected_official_names = []
     for elected_official in elected_officials:
         elected_official_names.append(elected_official.name)
+    app.logger.debug("returning " + str(elected_official_names))
     return jsonify(elected_official_names)
 
 # getResidancies like parties
@@ -48,25 +51,23 @@ def getElectedOfficials():
 
 @app.route("/register", methods=['POST'])
 def register():
+    app.logger.debug("got registration request")
     user_token = request.form.get(USER_TOKEN)
-    birth_year = request.form.get(BIRTH_YEAR)
-    job = request.form.get(JOB)
-    city = request.form.get(RESIDANCY)
-    party = request.form.get(PARTY)
-    involvment = InvolvementLevel[request.form.get(INVOLVEMENT_LEVEL)]
-
-    new_user = User.createUser(token=user_token, birthYear=birth_year,
-                               involvmentLevel=involvment, residancy=city,
-                               job=job)
-    new_user.associate_party = Party.select(graph, primary_value=party).first()
-    graph.begin(autocommit=True).push(new_user)
-    return Response.SUCCESSS, Response.CODE_SUCCESS
+    if True:
+        birth_year = request.form.get(BIRTH_YEAR)
+        job = request.form.get(JOB)
+        city = request.form.get(RESIDANCY)
+        party = request.form.get(PARTY)
+        involvement = InvolvementLevel[request.form.get(INVOLVEMENT_LEVEL)]
+        user = User.createUser(graph= graph, token=user_token, birthYear=birth_year,
+                        involvementLevel=involvement.value, residancy=city,
+                        job=job, party=party)
+        app.logger.debug("created user " + jsonify(user))
+    return jsonify("Success")
 
 # api functions for first time login  --- end
 
 # notification api function --- start
-
-app.run("127.0.0.1", 8080, debug=True)
 
 # Notification Screen
 # 1. law notification -> get user token, last update timestamp
@@ -74,7 +75,17 @@ app.run("127.0.0.1", 8080, debug=True)
 #
 # 2.  law vote submit -> get user token, law name & id, vote
 #     return {party members votes - his own party, other parties, etc.}
-#
+
+@app.route("/lawNotification", methods=['POST'])
+def lawNotification():
+    user_token = request.form.get(USER_TOKEN)
+    user = User.select(graph, primary_value=user_token).first()
+
+
+
+app.run("127.0.0.1", 8080, debug=True)
+
+
 #
 # Votes History Screen
 # 1. get last 100 laws  -> get user token

@@ -8,9 +8,9 @@ PARTY = "party"
 INVOLVEMENT_LEVEL = "involvement_level"
 
 class InvolvementLevel(Enum):
-    LOW = "LOW"
-    MEDIUM = "MEDIUM"
-    HIGH = "HIGH"
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
 
 class Response(Enum):
     CODE_REQUEST_FAILED = 304
