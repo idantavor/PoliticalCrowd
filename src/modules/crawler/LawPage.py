@@ -59,9 +59,22 @@ def get_law_description_from_div(html_tree) :
     else :
         return ""
 
+
+def get_initiators_from_div(html_tree) :
+    initiators = []
+    possible_divs = html_tree.xpath("//td[contains(@class, 'LawSecondaryDetailsTd')]/div")
+    for div in possible_divs :
+        if LAW_PAGE_CONSTANTS.LAW_PAGE_INITIATORS in div.xpath("./text()") :
+            #found the right div
+            td = div.xpath("../../td")[1]
+            initiators = td.xpath("./text()").split(",")
+            return initiators
+    return initiators
+
+
 '''get the a law decription from the law page url, returnes an empty string upon failure
     does not throw exceptions'''
-def get_law_description_from_url(url):
+def fill_data_from_law_page_url(url,out_dict):
     res = requests.get(url)
     cookies = {}
     for c in res.cookies:
@@ -82,6 +95,9 @@ def get_law_description_from_url(url):
             description = get_law_description_from_file(html_tree)
         except Exception as e:
             logger.error(str(e))
+    out_dict["description"] = description
+
+    initiators = []
 
     return description
 
@@ -147,29 +163,39 @@ def get_law_page_url_from_json(vote_json) :
 '''main function, recieves json containing the title of the law and it's time
    returns a summary of the law, upon failure returns an empty string
    does not throw exceptions'''
-def get_law_description(vote_json):
-    res = ""
+def fill_law_description(in_vote_json):
+    out_dict = {}
+    out_dict["description"] = ""
+    out_dict["url"] = ""
+    out_dict["initiators"] = ""
     logger.debug("trying to get law page url from json")
     try :
-        url = get_law_page_url_from_json(vote_json)
+        url = get_law_page_url_from_json(in_vote_json)
         if url == "" :
             raise Exception("failed to get law page url")
     except Exception as e :
         logger.error(str(e))
-        return res
+        return out_dict
+    out_dict["url"] = url
     logger.debug("law page url is {}".format(url))
     logger.debug("trying to get law description from url")
     try:
-        res = get_law_description_from_url(url)
-        if res == "":
+        description = fill_data_from_law_page_url(url)
+        if description == "":
             raise Exception("failed to get law description from url")
     except Exception as e:
         logger.error(str(e))
-        return res
+        return out_dict
     #remove empty lines
-    res = "\n".join([ll.rstrip() for ll in res.splitlines() if ll.strip()])
+    description = "\n".join([ll.rstrip() for ll in description.splitlines() if ll.strip()])
+    out_dict["description"] = description
     #return
-    return res
+    return out_dict
+
+
+
+
+
 
 
 
