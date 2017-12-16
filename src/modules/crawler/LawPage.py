@@ -64,11 +64,12 @@ def get_initiators_from_div(html_tree) :
     initiators = []
     possible_divs = html_tree.xpath("//td[contains(@class, 'LawSecondaryDetailsTd')]/div")
     for div in possible_divs :
-        if LAW_PAGE_CONSTANTS.LAW_PAGE_INITIATORS in div.xpath("./text()") :
+        div_text = div.xpath(".//text()")[1]
+        if LAW_PAGE_CONSTANTS.LAW_PAGE_INITIATORS in div_text :
             #found the right div
             td = div.xpath("../../td")[1]
-            initiators = td.xpath("./text()").split(",")
-            return initiators
+            initiators = td.xpath("./text()")[0]
+            return initiators.strip().split(",")
     return initiators
 
 
@@ -95,11 +96,18 @@ def fill_data_from_law_page_url(url,out_dict):
             description = get_law_description_from_file(html_tree)
         except Exception as e:
             logger.error(str(e))
+
+    #remove empty lines
+    description = "\n".join([ll.rstrip() for ll in description.splitlines() if ll.strip()])
     out_dict["description"] = description
 
-    initiators = []
+    try:
+        initiators = get_initiators_from_div(html_tree)
+    except Exception as e:
+        logger.error("failed getting initiators from law page url {} ".format(str(e)))
+    out_dict["initiators"] = initiators
 
-    return description
+    return
 
 
 def parse_title(search_term) :
@@ -135,8 +143,10 @@ def are_date_equal(json_date,html_date) :
 
 def get_law_page_url_from_json(vote_json) :
     #build the search term
-    search_term = vote_json["title"]
-    date = vote_json["time"]
+    search_term = vote_json["raw_title"]
+    date = vote_json["date"]
+    # search_term = vote_json["title"]
+    # date = vote_json["time"]
     search_term = parse_title(search_term)
     #build the query url
     query_url = LAW_PAGE_CONSTANTS.LAW_PAGE_QUERY_URL.format(search_term)
@@ -163,32 +173,24 @@ def get_law_page_url_from_json(vote_json) :
 '''main function, recieves json containing the title of the law and it's time
    returns a summary of the law, upon failure returns an empty string
    does not throw exceptions'''
-def fill_law_description(in_vote_json):
+def build_law_dict(in_vote_json):
     out_dict = {}
     out_dict["description"] = ""
     out_dict["url"] = ""
-    out_dict["initiators"] = ""
+    out_dict["initiators"] = []
     logger.debug("trying to get law page url from json")
     try :
         url = get_law_page_url_from_json(in_vote_json)
         if url == "" :
-            raise Exception("failed to get law page url")
+            raise Exception("got empty url")
     except Exception as e :
-        logger.error(str(e))
+        logger.error("failed to get law page url {}".format(str(e)))
         return out_dict
     out_dict["url"] = url
     logger.debug("law page url is {}".format(url))
-    logger.debug("trying to get law description from url")
-    try:
-        description = fill_data_from_law_page_url(url)
-        if description == "":
-            raise Exception("failed to get law description from url")
-    except Exception as e:
-        logger.error(str(e))
-        return out_dict
-    #remove empty lines
-    description = "\n".join([ll.rstrip() for ll in description.splitlines() if ll.strip()])
-    out_dict["description"] = description
+    logger.debug("trying to get law data from url")
+    fill_data_from_law_page_url(url, out_dict)
+
     #return
     return out_dict
 
@@ -205,14 +207,14 @@ def test() :
     for i in range(len(data['objects'])):
         curr_json = data['objects'][i]
         s = time.time()
-        description = get_law_description(curr_json)
+        dict = build_law_dict(curr_json)
         e = time.time()
         print("for title {} law description is : ".format(curr_json["title"]))
-        print(description)
+        print(str(dict["initiators"]) + " , " + dict["url"])
         print("took {} seconds to get this description".format(e - s))
         print ("#"*10+" END "+"#"*10+'\n')
 
-
+#
 # url  = "http://main.knesset.gov.il/Activity/Legislation/Laws/Pages/LawBill.aspx?t=lawsuggestionssearch&lawitemid=564206"
 # url2 ="http://main.knesset.gov.il/Activity/Legislation/Laws/Pages/LawBill.aspx?t=LawReshumot&lawitemid=567248"
 # url3 = "http://main.knesset.gov.il/Activity/Legislation/Laws/Pages/LawBill.aspx?t=lawsuggestionssearch&lawitemid=2015276"
@@ -223,4 +225,7 @@ def test() :
 
 # print(get_law_description_from_url(get_law_page_url_from_json([18])))
 
-test()
+#test()
+# d={}
+# fill_data_from_law_page_url(url,d)
+# x=1
