@@ -1,11 +1,6 @@
 from py2neo.ogm import *
 
-from src.modules.dal.relations.Relations import VOTED_FOR, VOTED_AGAINST, ELECTED_VOTED_FOR_FIRST, \
-    ELECTED_VOTED_FOR_SECOND, \
-    ELECTED_VOTED_FOR_THIRD, ELECTED_VOTED_AGAINST_FIRST, ELECTED_VOTED_AGAINST_SECOND, ELECTED_VOTED_AGAINST_THIRD, \
-    ELECTED_ABSTAINED_FIRST, ELECTED_ABSTAINED_SECOND, ELECTED_ABSTAINED_THIRD, ELECTED_MISSING_FIRST, \
-    ELECTED_MISSING_SECOND, ELECTED_MISSING_THIRD, ASSOCIATE_PARTY, MEMBER_OF_PARTY, TAGGED_AS, TAGGED_LAW, WORK_AT, \
-    RESIDING
+from src.modules.dal.relations.Relations import *
 from src.modules.backend.APIConstants import BLANK_TAG
 import datetime
 
@@ -26,34 +21,28 @@ class Party(GraphObject):
         party.agenda = agenda
         return party
 
+    @classmethod
+    def createPartyFromJson(cls, party_json):
+        party = cls()
+        for attr in [attrib for attrib in dir(party) if "__" not in attrib]:
+            if attr in party_json:
+                party.__setattr__(attr, party_json[attr])
+        return party
+
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
 
 
 class ElectedOfficial(GraphObject):
     __primarykey__ = "name"
-
     name = Property()
     active = Property(key="active")
     title = Property()
-
+    img_url = Property()
+    is_active = Property()
+    homepage_url=Property()
     member_of_party = RelatedTo(Party)
-
-    voted_for_first = RelatedFrom("Law", ELECTED_VOTED_FOR_FIRST)
-    voted_for_second = RelatedFrom("Law", ELECTED_VOTED_FOR_SECOND)
-    voted_for_third = RelatedFrom("Law", ELECTED_VOTED_FOR_THIRD)
-
-    voted_against_first = RelatedFrom("Law", ELECTED_VOTED_AGAINST_FIRST)
-    voted_against_second = RelatedFrom("Law", ELECTED_VOTED_AGAINST_SECOND)
-    voted_against_third = RelatedFrom("Law", ELECTED_VOTED_AGAINST_THIRD)
-
-    abstained_first = RelatedFrom("Law", ELECTED_ABSTAINED_FIRST)
-    abstained_second = RelatedFrom("Law", ELECTED_ABSTAINED_SECOND)
-    abstained_third = RelatedFrom("Law", ELECTED_ABSTAINED_THIRD)
-
-    missing_first = RelatedFrom("Law", ELECTED_MISSING_FIRST)
-    missing_second = RelatedFrom("Law", ELECTED_MISSING_SECOND)
-    missing_third = RelatedFrom("Law", ELECTED_MISSING_THIRD)
+    vote_envolven_in = RelatedFrom("Votes")
 
     @classmethod
     def createElectedOfficial(cls, name, active, title):
@@ -63,8 +52,20 @@ class ElectedOfficial(GraphObject):
         ret.title = title
         return ret
 
+    @classmethod
+    def createElectedOfficialFromJson(cls, official_json,party):
+        official = cls()
+        official.member_of_party.add(party)
+        official.name=" ".join((official_json.get('name').split()))
+        official.title=official_json.get('title')
+        official.img_url=official_json.get('img_url')
+        official.is_active = official_json.get('is_active')
+        official.homepage_url=official_json.get('homepage_url')
+        return official
+
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
+
 
 
 class Tag(GraphObject):
@@ -88,37 +89,17 @@ class Votes(object):
 
 class Law(GraphObject):
     __primarykey__ = "name"
-
     name = Property()
     timestamp = Property(key="timestamp")
     status = Property(key="status")
     description = Property()
     link = Property()
     tags_votes = Property()
-
-    tags = RelatedTo(Tag)
+    votes=RelatedFrom(Votes)
+    #tags = RelatedTo(Tag)
     users_taged = RelatedFrom("User", TAGGED_LAW)
 
-    user_voted_for = RelatedFrom("User", VOTED_FOR)
-    user_voted_against = RelatedFrom("User", VOTED_AGAINST)
-
-    elected_voted_for_first = RelatedTo(ElectedOfficial)
-    elected_voted_for_second = RelatedTo(ElectedOfficial)
-    elected_voted_for_third = RelatedTo(ElectedOfficial)
-
-    elected_voted_against_first = RelatedTo(ElectedOfficial)
-    elected_voted_against_second = RelatedTo(ElectedOfficial)
-    elected_voted_against_third = RelatedTo(ElectedOfficial)
-
-    elected_abstained_first = RelatedTo(ElectedOfficial)
-    elected_abstained_second = RelatedTo(ElectedOfficial)
-    elected_abstained_third = RelatedTo(ElectedOfficial)
-
-    elected_missing_first = RelatedTo(ElectedOfficial)
-    elected_missing_second = RelatedTo(ElectedOfficial)
-    elected_missing_third = RelatedTo(ElectedOfficial)
-
-    proposed_by = RelatedTo(ElectedOfficial)
+    #proposed_by = RelatedTo(ElectedOfficial)
 
     @classmethod
     def createLaw(cls, name, timestamp, status, description, link):
@@ -128,24 +109,60 @@ class Law(GraphObject):
         law.status = status
         law.description = description
         law.link = link
-        law.tags_votes = {} # TagName : {class votes-> upvotes, downvotes}
+#        law.tags_votes = {} # TagName : {class votes-> upvotes, downvotes}
         return law
-
-    # def tagVote(self, graph, tag_name, is_upvote=True):
-    #     if tag_name not in self.tags_votes:
-    #         self.tags_votes[tag_name] = Votes()
-    #     if is_upvote:
-    #         self.tags_votes[tag_name].upvote()
-    #     else:
-    #         self.tags_votes[tag_name].downvote()
-    #     tagNode = Tag.select(graph, primary_value=tag_name)
-    #     self.tags.add(tagNode).first()
-
 
 
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
 
+class Vote(GraphObject):
+    __primary__ = "raw_title"
+    raw_title=Property()
+    type=Property()
+    date=Property()
+    url = Property()
+    vote_num = Property()
+    law = RelatedTo(Law)
+    meeting_num = Property()
+    elected_voted_for = RelatedTo(ElectedOfficial)
+    elected_voted_against = RelatedTo(ElectedOfficial)
+    elected_abstained = RelatedTo(ElectedOfficial)
+    elected_missing = RelatedTo(ElectedOfficial)
+    user_voted_for = RelatedFrom("User", VOTED_FOR)
+    user_voted_against = RelatedFrom("User", VOTED_AGAINST)
+
+    @classmethod
+    def createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
+        vote = cls()
+        for attr in [attrib for attrib in dir(vote) if "__" not in attrib]:
+            if attr in vote_json:
+                vote.__setattr__(attr, vote_json[attr])
+        vote.law.add(law)
+        if vote_details_json is not None:
+            if graph is None:
+                raise Exception("pass a graph object in order to retreive the Elected officials")
+            for member_name in vote_details_json['FOR']:
+                member=ElectedOfficial.select(graph,member_name).first()
+                if member is None:
+                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                vote.elected_voted_for.add(member)
+            for member_name in vote_details_json['ABSTAINED']:
+                member = ElectedOfficial.select(graph, member_name).first()
+                if member is None:
+                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                vote.elected_abstained.add(member)
+            for member_name in vote_details_json['DIDNT_VOTE']:
+                member = ElectedOfficial.select(graph, member_name).first()
+                if member is None:
+                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                vote.elected_missing.add(member)
+            for member_name in vote_details_json['AGAINST']:
+                member = ElectedOfficial.select(graph, member_name).first()
+                if member is None:
+                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                vote.elected_voted_against.add(member)
+        return vote
 
 class JobCategory(GraphObject):
     __primarykey__ = "name"
@@ -224,7 +241,7 @@ class User(GraphObject):
         law = Law.select(graph=graph, primary_value=law_name).first()
         for tag_name in tags_names:
             if tag_name != BLANK_TAG:
-                law.    
+               pass
 
 
 
