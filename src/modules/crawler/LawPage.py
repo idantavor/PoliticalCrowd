@@ -191,8 +191,9 @@ def build_law_dict(in_vote_json):
     logger.debug("trying to get law data from url")
     fill_data_from_law_page_url(url, out_dict)
 
+        return res
     #return
-    return out_dict
+    return res
 
 
 
