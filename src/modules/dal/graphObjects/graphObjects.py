@@ -288,8 +288,8 @@ class User(GraphObject):
         user.birth_year = birthYear
         user.involvment_level = involvmentLevel
         user.associate_party.add(Party.safeSelect(graph=graph, name=party))
-        user.job_category.add(JobCategory.safeSelect(graph=graph, job_name=job))
-        user.residency.add(Residency.safeSelect(graph=graph, name=residancy))
+        user.work_at.add(JobCategory.safeSelect(graph=graph, job_name=job))
+        user.residing.add(Residency.safeSelect(graph=graph, name=residancy))
         trans = graph.begin()
         graph.push(user)
         trans.commit()
