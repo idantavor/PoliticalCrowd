@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
 
-from modules.backend.common.APIConstants import *
-from modules.dal.GraphConnection import bolt_connect
-from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial
-
+from src.modules.backend.common.APIConstants import *
+from src.modules.dal.GraphConnection import bolt_connect
+from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial, Law, Residency, JobCategory
 
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
@@ -13,12 +12,7 @@ graph = bolt_connect()
 @app.errorhandler(Exception)
 def defaultHandler(error):
     app.logger.error(str(error))
-#    if type(error   )
-#        return 1
     return Response.FAILED, Response.CODE_FAILED
-
-def isUserInSession(user):
-    return 1
 
 # api functions for first time login -- begin
 
@@ -42,9 +36,25 @@ def getElectedOfficials():
     app.logger.debug("returning " + str(elected_official_names))
     return jsonify(elected_official_names)
 
-# getResidancies like parties
+@app.route("/getResidencies", methods=['GET'])
+def getResidencies():
+    app.logger.debug("got elected officials request")
+    residancies = Residency.select(graph)
+    residancies_names = []
+    for residancy in residancies:
+        residancies_names.append(residancy.name)
+    app.logger.debug("returning " + str(residancies_names))
+    return jsonify(residancies_names)
 
-# getJobCategories like parties
+@app.route("/getJobCategories", methods=['GET'])
+def getJobCategories():
+    app.logger.debug("got elected officials request")
+    job_categories = JobCategory.select(graph)
+    job_categories_names = []
+    for job_category in job_categories:
+        job_categories_names.append(job_category.name)
+    app.logger.debug("returning " + str(job_categories_names))
+    return jsonify(job_categories_names)
 
 # adding שמאל and ימין tags
 
@@ -52,16 +62,19 @@ def getElectedOfficials():
 def register():
     app.logger.debug("got registration request")
     user_token = request.form.get(USER_TOKEN)
-    if True:
+    res = graph.evaluate("MATCH (n:User) WHERE n.token = \"{x}\" RETURN n LIMIT 1", x = user_token)
+    if res is None:
         birth_year = request.form.get(BIRTH_YEAR)
         job = request.form.get(JOB)
-        city = request.form.get(RESIDANCY)
+        city = request.form.get(RESIDENCY)
         party = request.form.get(PARTY)
         involvement = InvolvementLevel[request.form.get(INVOLVEMENT_LEVEL)]
+
         user = User.createUser(graph= graph, token=user_token, birthYear=birth_year,
-                        involvementLevel=involvement.value, residancy=city,
-                        job=job, party=party)
-        app.logger.debug("created user " + jsonify(user))
+                               involvmentLevel=involvement.value, residancy=city,
+                                job=job, party=party)
+
+        #app.logger.debug("created user " + user.token)
     return jsonify("Success")
 
 # api functions for first time login  --- end
@@ -72,13 +85,31 @@ def register():
 # 1. law notification -> get user token, last update timestamp
 #     return {id, link, name, description, party, party member, }
 #
-# 2.  law vote submit -> get user token, law name & id, vote
+# 2.  law vote submit -> get user token, law name, vote
 #     return {party members votes - his own party, other parties, etc.}
 
 @app.route("/lawNotification", methods=['POST'])
 def lawNotification():
     user_token = request.form.get(USER_TOKEN)
     user = User.select(graph, primary_value=user_token).first()
+    #continue
+
+@app.route("/lawVoteSubmit", methods=['POST'])
+def lawVoteSubmit():
+    user_token = request.form.get(USER_TOKEN)
+    law_name = request.form.get(LAW_NAME)
+    vote = request.form.get(VOTE)
+    user = User.safeSelect(graph, user_token)
+    law = Law.safeSelect(graph, law_name)
+    if vote is VOTED_FOR:
+        user.voted_for.add(law)
+    elif vote is VOTED_AGAINST:
+        user.voted_against.add(law)
+    else:
+        raise Exception("ileagal vote type")
+    graph.push(user)
+
+
 
 
 

@@ -2,23 +2,23 @@ import datetime
 import time
 from py2neo import Graph
 
-
-from modules.dal.graphObjects.graphObjects import User
+from modules.dal.GraphConnection import bolt_connect
+from modules.dal.graphObjects.graphObjects import User, Residency, JobCategory
 from modules.dal.graphObjects.graphObjects import Party
 from modules.dal.graphObjects.graphObjects import ElectedOfficial
 from modules.dal.graphObjects.graphObjects import Law
 
-def http_connect():
-    return Graph("http://127.0.0.1:7474/db/data/", password="12345")
+#def http_connect():
+#    return Graph("http://127.0.0.1:7474/db/data/", password="12345")
     #return Graph("http://5.29.28.68:7474/db/data/", username="neo4j", password="bibikiller")
 
-def bolt_connect():
-    return Graph("bolt://127.0.0.1:7687/db/data/",password="12345")
+#def bolt_connect():
+#    return Graph("bolt://127.0.0.1:7687/db/data/",password="12345")
     #return Graph("bolt://5.29.28.68:7687/db/data/", username="neo4j", password="bibikiller")
 
 
 def initDb():
-    graph = bolt_connect()
+    graph = None #bolt_connect()
     graph.begin(autocommit=True)
     graph.delete_all()
 
@@ -41,7 +41,7 @@ def initDb():
 
 
 def selectionObjectPrints():
-    graph = bolt_connect()
+    graph = None #bolt_connect()
     ofer = User.select(graph, primary_value="1").first()
     print(ofer)
     law = Law.select(graph, primary_value="חוק דבילי").first()
@@ -52,7 +52,7 @@ def selectionObjectPrints():
     print(party)
 
 def relatedFromQueries():
-    graph = bolt_connect()
+    graph = None #bolt_connect()
     party = Party.select(graph, primary_value="ליכוד").first()
     pp = party.party_members
     print("elected official members:")
@@ -72,7 +72,7 @@ def relatedFromQueries():
         print(k)
 
 def relatedToQueries():
-    graph = bolt_connect()
+    graph = None #bolt_connect()
     ofer = User.select(graph, primary_value="1").first()
     print("parties ofer selected (can't enforce only 1 by neo4j)")
     for k in ofer.associate_party:
@@ -97,6 +97,17 @@ def relatedToQueries():
 #relatedFromQueries()
 #relatedToQueries()
 
+graph = bolt_connect()
+
+a = Residency()
+a.name="תל אביב"
+
+graph.push(a)
+
+a = JobCategory()
+a.name="זגג"
+
+graph.push(a)
 
 
 

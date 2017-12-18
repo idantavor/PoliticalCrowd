@@ -1,12 +1,16 @@
 from enum import Enum
 
-USER_TOKEN = "userToken"
-BIRTH_YEAR = "birthYear"
+USER_TOKEN = "user_token"
+BIRTH_YEAR = "birth_year"
 JOB = "job"
-RESIDANCY = "residancy"
+RESIDENCY = "residency"
 PARTY = "party"
 INVOLVEMENT_LEVEL = "involvement_level"
-BLANK_TAG = "blankTag"
+BLANK_TAG = "blank_tag"
+VOTE = "vote"
+LAW_NAME = "law_name"
+VOTED_FOR = "VOTED_FOR"
+VOTED_AGAINST = "VOTED_AGAINST"
 
 class InvolvementLevel(Enum):
     LOW = 1
