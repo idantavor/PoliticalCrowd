@@ -1,8 +1,13 @@
 from py2neo.ogm import *
 
 from src.modules.dal.relations.Relations import *
-from src.modules.backend.common.APIConstants import BLANK_TAG
+from src.modules.backend.common.APIConstants import BLANK_TAG, Rank
 import datetime
+
+
+def selfUpdateGraph(graph, obj):
+    graph.begin(autocommit=True)
+    graph.push(obj)
 
 
 class Party(GraphObject):
@@ -273,6 +278,7 @@ class User(GraphObject):
     token = Property()
     birth_year = Property(key="birthYear")
     involvment_level = Property(key="involvmentLevel")
+    rank = Property(key="rank")
 
     residing = RelatedTo(Residency)
     work_at = RelatedTo(JobCategory)
@@ -285,6 +291,7 @@ class User(GraphObject):
     def createUser(cls, graph, token, job, birthYear, residancy, involvmentLevel, party):
         user = cls()
         user.token = token
+        user.rank = Rank.First
         user.birth_year = birthYear
         user.involvment_level = involvmentLevel
         user.associate_party.add(Party.safeSelect(graph=graph, name=party))
@@ -314,29 +321,41 @@ class User(GraphObject):
 
     def changeInvlovmentLevel(self, graph, involvment_level):
         self.involvment_level = involvment_level
-        graph.begin(autocommit=True)
-        graph.push(self)
+        selfUpdateGraph(graph=graph, obj=self)
         return True
 
     def changeJobField(self, graph, job):
         self.job_category.clear()
         self.job_category = JobCategory.safeSelect(graph=graph, job_name=job)
-        graph.begin(autocommit=True)
-        graph.push(self)
+        selfUpdateGraph(graph=graph, obj=self)
         return True
+
+    def updateRankIfNeeded(self):
+        number_of_votes = len(self.voted_for) + len(self.voted_against)
+        if number_of_votes < 15:
+            self.rank = Rank.First
+        elif number_of_votes < 30:
+            self.rank = Rank.Second
+        elif number_of_votes < 60:
+            self.rank = Rank.Third
+        elif number_of_votes < 70:
+            self.rank = Rank.Fourth
+        elif number_of_votes < 85:
+            self.rank = Rank.Fifth
+        else:
+            self.rank = Rank.Sixth
+
 
     def changeResidency(self, graph, city):
         self.residency.clear()
         self.residency = Residency.safeSelect(graph=graph, name=city)
-        graph.begin(autocommit=True)
-        graph.push(self)
+        selfUpdateGraph(graph=graph, obj=self)
         return True
 
     def changeAssociateParty(self, graph, party):
         self.residency.clear()
         self.associate_party = Party.safeSelect(graph=graph, name=party)
-        graph.begin(autocommit=True)
-        graph.push(self)
+        selfUpdateGraph(graph=graph, obj=self)
         return True
 
     def voteLaw(self, graph, law_name, is_upvote=True):
@@ -351,8 +370,10 @@ class User(GraphObject):
                 self.voted_for.remove(law)
 
             self.voted_against.add(law)
-        graph.begin(autocommit=True)
-        graph.push(self)
+
+        self.updateRankIfNeeded(graph)
+
+        selfUpdateGraph(graph=graph, obj=self)
 
     def tagLaw(self, graph, law_name, tags_names):
         law = Law.safeSelect(graph=graph, name=law_name)
@@ -361,8 +382,7 @@ class User(GraphObject):
                continue
             law.tagLawByName(graph=graph, tag_name=tag_name)
         self.laws_tagged.add(law)
-        graph.begin(autocommit=True)
-        graph.push(self)
+        selfUpdateGraph(graph=graph, obj=self)
 
 
     def __str__(self, *args, **kwargs):

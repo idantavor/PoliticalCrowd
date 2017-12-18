@@ -21,3 +21,11 @@ class Response(Enum):
     CODE_REQUEST_FAILED = 304
     CODE_TOKEN_NOT_FOUND = 404
     CODE_SUCCESS = 200
+
+class Rank(Enum):
+    First = ""
+    Second = ""
+    Third = ""
+    Fourth = ""
+    Fifth = ""
+    Sixth = ""
