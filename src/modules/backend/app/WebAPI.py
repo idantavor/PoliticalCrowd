@@ -92,6 +92,7 @@ def register():
 def lawNotification():
     user_token = request.form.get(USER_TOKEN)
     user = User.select(graph, primary_value=user_token).first()
+
     #continue
 
 @app.route("/lawVoteSubmit", methods=['POST'])
