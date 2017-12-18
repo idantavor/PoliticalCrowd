@@ -287,9 +287,9 @@ class User(GraphObject):
         user.token = token
         user.birth_year = birthYear
         user.involvment_level = involvmentLevel
-        user.associate_party = Party.safeSelect(graph=graph, name=party)
-        user.job_category = JobCategory.safeSelect(graph=graph, job_name=job)
-        user.residency = Residency.safeSelect(graph=graph, name=residancy)
+        user.associate_party.add(Party.safeSelect(graph=graph, name=party))
+        user.job_category.add(JobCategory.safeSelect(graph=graph, job_name=job))
+        user.residency.add(Residency.safeSelect(graph=graph, name=residancy))
         trans = graph.begin()
         graph.push(user)
         trans.commit()
@@ -319,18 +319,21 @@ class User(GraphObject):
         return True
 
     def changeJobField(self, graph, job):
+        self.job_category.clear()
         self.job_category = JobCategory.safeSelect(graph=graph, job_name=job)
         graph.begin(autocommit=True)
         graph.push(self)
         return True
 
     def changeResidency(self, graph, city):
+        self.residency.clear()
         self.residency = Residency.safeSelect(graph=graph, name=city)
         graph.begin(autocommit=True)
         graph.push(self)
         return True
 
     def changeAssociateParty(self, graph, party):
+        self.residency.clear()
         self.associate_party = Party.safeSelect(graph=graph, name=party)
         graph.begin(autocommit=True)
         graph.push(self)
