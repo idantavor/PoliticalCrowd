@@ -1,7 +1,8 @@
+from flask import jsonify
 from py2neo.ogm import *
 
 from src.modules.dal.relations.Relations import *
-from src.modules.backend.common.APIConstants import BLANK_TAG, Rank
+from src.modules.backend.common.APIConstants import BLANK_TAG, Rank, InvolvementLevel
 import datetime
 
 
@@ -277,7 +278,7 @@ class User(GraphObject):
 
     token = Property()
     birth_year = Property(key="birthYear")
-    involvment_level = Property(key="involvmentLevel")
+    involvement_level = Property(key="involvmentLevel")
     rank = Property(key="rank")
 
     residing = RelatedTo(Residency)
@@ -287,13 +288,21 @@ class User(GraphObject):
     voted_against = RelatedTo(Law)
     laws_tagged = RelatedTo(Law)
 
+    def __str__(self):
+        return jsonify({
+            "token": self.token,
+            "birth_year" : self.birth_year,
+            "involvment_level" : InvolvementLevel(self.involvement_level).value,
+            "rank" : Rank(self.rank)
+        })
+
     @classmethod
-    def createUser(cls, graph, token, job, birthYear, residancy, involvmentLevel, party):
+    def createUser(cls, graph, token, job, birthYear, residancy, involvementLevel, party):
         user = cls()
         user.token = token
-        user.rank = Rank.First
+        user.rank = Rank.First.value
         user.birth_year = birthYear
-        user.involvment_level = involvmentLevel
+        user.involvement_level = involvementLevel
         user.associate_party.add(Party.safeSelect(graph=graph, name=party))
         user.work_at.add(JobCategory.safeSelect(graph=graph, job_name=job))
         user.residing.add(Residency.safeSelect(graph=graph, name=residancy))
@@ -319,8 +328,8 @@ class User(GraphObject):
 
         return user
 
-    def changeInvlovmentLevel(self, graph, involvment_level):
-        self.involvment_level = involvment_level
+    def changeInvlovmentLevel(self, graph, involvement_level):
+        self.involvement_level = involvement_level
         selfUpdateGraph(graph=graph, obj=self)
         return True
 

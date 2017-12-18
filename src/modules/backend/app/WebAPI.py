@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 
+from modules.backend.bl.UserService import isUserExist
 from src.modules.backend.common.APIConstants import *
 from src.modules.dal.GraphConnection import bolt_connect
 from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial, Law, Residency, JobCategory
@@ -16,7 +17,7 @@ def defaultHandler(error):
 
 # api functions for first time login -- begin
 
-@app.route("/getParties", methods=['GET'])
+#@app.route("/getParties", methods=['GET'])
 def getParties():
     app.logger.debug("got parties request")
     parties = Party.select(graph)
@@ -24,7 +25,28 @@ def getParties():
     for party in parties:
         parties_names.append(party.name)
     app.logger.debug("returning "+str(parties_names))
-    return jsonify(parties_names)
+    return parties_names
+
+#@app.route("/getResidencies", methods=['GET'])
+def getResidencies():
+    app.logger.debug("got elected officials request")
+    residencies = Residency.select(graph)
+    residencies_names = []
+    for residency in residencies:
+        residencies_names.append(residency.name)
+    app.logger.debug("returning " + str(residencies_names))
+    return residencies_names
+
+#@app.route("/getJobCategories", methods=['GET'])
+def getJobCategories():
+    app.logger.debug("got elected officials request")
+    job_categories = JobCategory.select(graph)
+    job_categories_names = []
+    for job_category in job_categories:
+        job_categories_names.append(job_category.name)
+    app.logger.debug("returning " + str(job_categories_names))
+    return job_categories_names
+
 
 @app.route("/getElectedOfficials", methods=['GET'])
 def getElectedOfficials():
@@ -36,25 +58,13 @@ def getElectedOfficials():
     app.logger.debug("returning " + str(elected_official_names))
     return jsonify(elected_official_names)
 
-@app.route("/getResidencies", methods=['GET'])
-def getResidencies():
-    app.logger.debug("got elected officials request")
-    residancies = Residency.select(graph)
-    residancies_names = []
-    for residancy in residancies:
-        residancies_names.append(residancy.name)
-    app.logger.debug("returning " + str(residancies_names))
-    return jsonify(residancies_names)
-
-@app.route("/getJobCategories", methods=['GET'])
-def getJobCategories():
-    app.logger.debug("got elected officials request")
-    job_categories = JobCategory.select(graph)
-    job_categories_names = []
-    for job_category in job_categories:
-        job_categories_names.append(job_category.name)
-    app.logger.debug("returning " + str(job_categories_names))
-    return jsonify(job_categories_names)
+@app.route("/getCategoryNames", methods=['GET'])
+def getCategoryNames():
+    return jsonify({
+        "parties":getParties(),
+        "residencies": getResidencies(),
+        "job_categories": getJobCategories()
+    })
 
 # adding שמאל and ימין tags
 
@@ -62,8 +72,7 @@ def getJobCategories():
 def register():
     app.logger.debug("got registration request")
     user_token = request.form.get(USER_TOKEN)
-    res = graph.evaluate("MATCH (n:User) WHERE n.token = \"{x}\" RETURN n LIMIT 1", x = user_token)
-    if res is None:
+    if isUserExist(graph, user_token):
         birth_year = request.form.get(BIRTH_YEAR)
         job = request.form.get(JOB)
         city = request.form.get(RESIDENCY)
@@ -71,29 +80,24 @@ def register():
         involvement = InvolvementLevel[request.form.get(INVOLVEMENT_LEVEL)]
 
         user = User.createUser(graph= graph, token=user_token, birthYear=birth_year,
-                               involvmentLevel=involvement.value, residancy=city,
-                                job=job, party=party)
+                               involvementLevel=involvement.value, residancy=city,
+                               job=job, party=party)
 
-        #app.logger.debug("created user " + user.token)
+        app.logger.debug("created user " + str(user))
     return jsonify("Success")
 
 # api functions for first time login  --- end
 
 # notification api function --- start
 
-# Notification Screen
-# 1. law notification -> get user token, last update timestamp
-#     return {id, link, name, description, party, party member, }
-#
-# 2.  law vote submit -> get user token, law name, vote
-#     return {party members votes - his own party, other parties, etc.}
-
 @app.route("/lawNotification", methods=['POST'])
 def lawNotification():
     user_token = request.form.get(USER_TOKEN)
-    user = User.select(graph, primary_value=user_token).first()
-
-    #continue
+    if isUserExist(graph, user_token):
+        # read new laws from somewhere
+        return "1"
+    else:
+        raise Exception("ileagal operation")
 
 @app.route("/lawVoteSubmit", methods=['POST'])
 def lawVoteSubmit():
@@ -109,14 +113,6 @@ def lawVoteSubmit():
     else:
         raise Exception("ileagal vote type")
     graph.push(user)
-
-
-
-
-
-app.run("127.0.0.1", 8080, debug=True)
-
-
 #
 # Votes History Screen
 # 1. get last 100 laws  -> get user token
@@ -127,7 +123,9 @@ app.run("127.0.0.1", 8080, debug=True)
 #       from here he can change his vote
 # 3. get law statistics -> get law id | name, user token
 #       return {all relevant statistics(by: age, party, job, living area)
-#
+
+
+
 #
 # Personal Statistics Screen
 # one API function - get user token and return:
@@ -136,3 +134,5 @@ app.run("127.0.0.1", 8080, debug=True)
 # 3. relation to all other users by age/party/job etc.
 # 4. favourite party member statistics: the user relation to his favourite member
 # 5.
+
+app.run("127.0.0.1", 8080, debug=True)
