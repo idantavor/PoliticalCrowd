@@ -4,6 +4,7 @@ from modules.backend.common.APIConstants import *
 from modules.dal.GraphConnection import bolt_connect
 from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial
 
+
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
 

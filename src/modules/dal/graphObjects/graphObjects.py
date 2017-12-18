@@ -1,7 +1,7 @@
 from py2neo.ogm import *
 
 from src.modules.dal.relations.Relations import *
-from src.modules.backend.APIConstants import BLANK_TAG
+from src.modules.backend.common.APIConstants import BLANK_TAG
 import datetime
 
 
@@ -29,6 +29,15 @@ class Party(GraphObject):
                 party.__setattr__(attr, party_json[attr])
         return party
 
+    @staticmethod
+    def safeSelect(graph, name):
+        try:
+            party = Party.select(graph=graph, primary_value=name).first()
+        except:
+            raise Exception(f"No party exist with name:{name}")
+
+        return party
+
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
 
@@ -41,12 +50,14 @@ class ElectedOfficial(GraphObject):
     img_url = Property()
     is_active = Property()
     homepage_url=Property()
+
     member_of_party = RelatedTo(Party)
-    laws_proposed=RelatedFrom("Law","proposed_by")
-    voted_for= RelatedFrom("Vote","elected_voted_for")
-    voted_against = RelatedFrom("Vote","elected_voted_against")
-    voted_abstained = RelatedFrom("Vote","elected_abstained")
-    vote_missing = RelatedFrom("Vote","elected_missing")
+    
+    laws_proposed=RelatedFrom("Law",PROPOSED_BY)
+    voted_for= RelatedFrom("Vote",ELECTED_VOTED_FOR)
+    voted_against = RelatedFrom("Vote",ELECTED_VOTED_AGAINST)
+    voted_abstained = RelatedFrom("Vote",ELECTED_ABSTAINED)
+    vote_missing = RelatedFrom("Vote",ELECTED_MISSING)
 
     @classmethod
     def createElectedOfficial(cls, name, active, title):
@@ -67,6 +78,15 @@ class ElectedOfficial(GraphObject):
         official.homepage_url=official_json.get('homepage_url')
         return official
 
+    @staticmethod
+    def safeSelect(graph, name):
+        try:
+            elected = ElectedOfficial.select(graph=graph, primary_value=name).first()
+        except:
+            raise Exception(f"No elected official exists with name:{name}")
+
+        return elected
+
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
 
@@ -78,17 +98,14 @@ class Tag(GraphObject):
     name = Property()
     laws = RelatedFrom("Law", TAGGED_AS)
 
+    @staticmethod
+    def safeSelect(graph, tag_name):
+        try:
+            tag = Tag.select(graph=graph, primary_value=tag_name).first()
+        except:
+            raise Exception(f"No tag exists with name:{name}")
 
-class Votes(object):
-    def __init__(self):
-        self._upvotes = 0
-
-    def upvote(self):
-        self._upvotes += 1
-
-    def getScore(self):
-        return self._upvotes
-
+        return tag
 
 
 class Law(GraphObject):
@@ -99,13 +116,15 @@ class Law(GraphObject):
     description = Property()
     link = Property()
     tags_votes = Property()
-    votes=RelatedFrom("Vote","law")
-    proposed_by = RelatedTo(ElectedOfficial)
-    #tags = RelatedTo(Tag)
 
+    tagged_as = RelatedTo(Tag)
+    proposed_by = RelatedTo(ElectedOfficial)
+
+    elected_officials_votes = RelatedFrom("Vote", LAW)
+    users_voted_for = RelatedFrom("User", VOTED_FOR)
+    users_voted_againts = RelatedFrom("User", VOTED_AGAINST)
     users_taged = RelatedFrom("User", TAGGED_LAW)
 
-    #proposed_by = RelatedTo(ElectedOfficial)
 
     @classmethod
     def createLaw(cls, name, timestamp, status, description, link):
@@ -115,8 +134,27 @@ class Law(GraphObject):
         law.status = status
         law.description = description
         law.link = link
-#        law.tags_votes = {} # TagName : {class votes-> upvotes, downvotes}
+        law.tags_votes = {}  # {TagName : num_of_upvotes}
         return law
+
+    @staticmethod
+    def safeSelect(graph, name):
+        try:
+            law = Law.select(graph=graph, primary_value=name).first()
+        except:
+            raise Exception(f"No law by name:{name}")
+
+        return law
+
+    def tagLawByName(self, graph, tag_name):
+        tagNode = Tag.safeSelect(graph=graph, tag_name=tag_name)
+        if tag_name in self.tags_votes:
+            self.tags_votes[tag_name] += 1
+        else:
+            self.tags_votes[tag_name] = 1
+        self.tagged_as.add(tagNode)
+        graph.begin(autocommit=True)
+        graph.push(self)
 
 
     def __str__(self, *args, **kwargs):
@@ -135,8 +173,6 @@ class Vote(GraphObject):
     elected_voted_against = RelatedTo(ElectedOfficial)
     elected_abstained = RelatedTo(ElectedOfficial)
     elected_missing = RelatedTo(ElectedOfficial)
-    user_voted_for = RelatedFrom("User", VOTED_FOR)
-    user_voted_against = RelatedFrom("User", VOTED_AGAINST)
 
     @classmethod
     def createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
@@ -170,11 +206,21 @@ class Vote(GraphObject):
                 vote.elected_voted_against.add(member)
         return vote
 
+
 class JobCategory(GraphObject):
     __primarykey__ = "name"
 
     name = Property()
     users = RelatedFrom("User", WORK_AT)
+
+    @staticmethod
+    def safeSelect(graph, name):
+        try:
+            job = JobCategory.select(graph=graph, primary_value=name).first()
+        except:
+            raise Exception(f"No job exist with title:{name}")
+
+        return job
 
 
 class Residency(GraphObject):
@@ -182,6 +228,15 @@ class Residency(GraphObject):
 
     name = Property()
     users = RelatedFrom("User", RESIDING)
+
+    @staticmethod
+    def safeSelect(graph, name):
+        try:
+            city = Residency.select(graph=graph, primary_value=name).first()
+        except:
+            raise Exception(f"No city exist with name:{name}")
+
+        return city
 
 
 class User(GraphObject):
@@ -210,6 +265,23 @@ class User(GraphObject):
         trans = graph.begin()
         graph.push(user)
         trans.commit()
+        return user
+
+    @staticmethod
+    def userExists(graph, token):
+        try:
+            user = User.select(graph=graph, primary_value=token).first()
+            return True
+        except:
+            return False
+
+    @staticmethod
+    def safeSelect(graph, token):
+        try:
+            user = User.select(graph=graph, primary_value=token).first()
+        except:
+            raise Exception(f"No user exist with token:{token}")
+
         return user
 
     def getUserAge(self):
@@ -244,10 +316,13 @@ class User(GraphObject):
         graph.push(self)
 
     def tagLaw(self, graph, law_name, tags_names):
-        law = Law.select(graph=graph, primary_value=law_name).first()
+        law = Law.safeSelect(graph=graph, name=law_name)
         for tag_name in tags_names:
-            if tag_name != BLANK_TAG:
-               pass
+            if tag_name == BLANK_TAG:
+               continue
+            law.tagLawByName(graph=graph, tag_name=tag_name)
+
+
 
 
 
