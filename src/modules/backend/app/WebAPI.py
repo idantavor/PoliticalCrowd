@@ -1,9 +1,7 @@
 from flask import Flask, request, jsonify
-from flask import flash
 
+from modules.backend.common.APIConstants import *
 from modules.dal.GraphConnection import bolt_connect
-from src.modules import Logger
-from src.modules.backend.APIConstants import *
 from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial
 
 app = Flask(__name__)
