@@ -42,8 +42,12 @@ class ElectedOfficial(GraphObject):
     is_active = Property()
     homepage_url=Property()
     member_of_party = RelatedTo(Party)
-    votes_envolved_in = RelatedFrom("Vote")
-    laws_proposed=RelatedFrom("Law")
+    laws_proposed=RelatedFrom("Law","proposed_by")
+    voted_for= RelatedFrom("Vote","elected_voted_for")
+    voted_against = RelatedFrom("Vote","elected_voted_against")
+    voted_abstained = RelatedFrom("Vote","elected_abstained")
+    vote_missing = RelatedFrom("Vote","elected_missing")
+
     @classmethod
     def createElectedOfficial(cls, name, active, title):
         ret = cls()
@@ -95,7 +99,7 @@ class Law(GraphObject):
     description = Property()
     link = Property()
     tags_votes = Property()
-    votes=RelatedFrom("Vote")
+    votes=RelatedFrom("Vote","law")
     proposed_by = RelatedTo(ElectedOfficial)
     #tags = RelatedTo(Tag)
 

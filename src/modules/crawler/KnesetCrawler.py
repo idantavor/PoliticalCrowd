@@ -85,6 +85,7 @@ def get_party_and_role_from_role_title(role_title):
     return party,role
 
 def get_member_dict(member_page_url,image_link,member_name):
+    print("getting url for member {}".format(member_name))
     html_tree = html.fromstring(UTILS.get_url(member_page_url,encoding='utf8'))
     title=html_tree.xpath('//div[@class="MKRoleDiv"]//h3/text()')[0]
     party,role=get_party_and_role_from_role_title(title)
@@ -103,7 +104,8 @@ def get_non_voting_officials_dict_list()->list:
 def get_party_to_member_dict()->dict:
     res_dict={}
     html_tree = html.fromstring(UTILS.get_url(URLS.MEMBERS_URL))
-    elem_members=html_tree.xpath('//table[@id="dlMkMembers"]//td[.//@class="PhotoAsistno"]')
+    elem_members=html_tree.xpath('//table[@id="dlMkMembers"]//td[.//@class="PhotoAsistno" or .//@class="PhotoAsist"]')
+    print("number of members collected {}".format(len(elem_members)))
     for elem_member in elem_members:
         image_url="{}{}".format(URLS.BASE_URL,elem_member.xpath('./img/@src')[0])
         name=elem_member.xpath('./a/text()')[0]
@@ -287,6 +289,7 @@ def get_law_list_by_min_date(date):
 #delete_db()
 #delete_db()
 #add_parties_and_members_to_db()
+#a=ElectedOfficial.select(graph,"ציפי חוטובלי").first()
 add_votes_to_db('1/12/2017')
 # res=UTILS.get_url("https://www.knesset.gov.il/vote/heb/vote_search.asp")
 # html_tree = html.fromstring(res)
