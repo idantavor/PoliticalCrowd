@@ -103,9 +103,10 @@ def fill_data_from_law_page_url(url,out_dict):
 
     try:
         initiators = get_initiators_from_div(html_tree)
+        out_dict["initiators"] = initiators
     except Exception as e:
         logger.error("failed getting initiators from law page url {} ".format(str(e)))
-    out_dict["initiators"] = initiators
+
 
     return
 
@@ -190,10 +191,9 @@ def build_law_dict(in_vote_json):
     logger.debug("law page url is {}".format(url))
     logger.debug("trying to get law data from url")
     fill_data_from_law_page_url(url, out_dict)
-
-        return res
+    return out_dict
     #return
-    return res
+
 
 
 

@@ -42,8 +42,8 @@ class ElectedOfficial(GraphObject):
     is_active = Property()
     homepage_url=Property()
     member_of_party = RelatedTo(Party)
-    vote_envolven_in = RelatedFrom("Votes")
-
+    #votes_envolved_in = RelatedFrom("Vote")
+    laws_proposed=RelatedFrom("Law")
     @classmethod
     def createElectedOfficial(cls, name, active, title):
         ret = cls()
@@ -95,8 +95,10 @@ class Law(GraphObject):
     description = Property()
     link = Property()
     tags_votes = Property()
-    votes=RelatedFrom(Votes)
+    votes=RelatedFrom("Vote")
+    proposed_by = RelatedTo(ElectedOfficial)
     #tags = RelatedTo(Tag)
+
     users_taged = RelatedFrom("User", TAGGED_LAW)
 
     #proposed_by = RelatedTo(ElectedOfficial)
@@ -143,7 +145,7 @@ class Vote(GraphObject):
             if graph is None:
                 raise Exception("pass a graph object in order to retreive the Elected officials")
             for member_name in vote_details_json['FOR']:
-                member=ElectedOfficial.select(graph,member_name).first()
+                member=ElectedOfficial.select(graph,str(member_name)).first()
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_for.add(member)

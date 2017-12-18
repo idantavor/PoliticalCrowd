@@ -213,16 +213,25 @@ def add_votes_to_db(date_from='1/8/2003'):
            law_name = LawPage.parse_title(vote['raw_title'])
            #check if the law is already in the db
            print(law_name)
-           law_obj=Law.select(graph,primary_value=law_name.replace('"','\"')).first()
-
-           if law_obj is None:
-               #create new law object to conatin the vote
-               url,description=LawPage.get_law_description(vote)
-               law_obj=Law.createLaw(law_name,None,None,description,url)
-           voting_details=get_vote_detail_dict("{}/{}".format(URLS.VOTES_BASE_URL,vote['url']))
-           vote_obj=Vote.createVoteFromJson(vote,law_obj,voting_details,graph)
-           graph.push(law_obj)
-           graph.push(vote_obj)
+           try:
+               law_obj=Law.select(graph,primary_value=law_name).first()
+               if law_obj is None:
+                   print("failed to find law for {}".format(law_name))
+                   #create new law object to conatin the vote
+                   law_dict=LawPage.build_law_dict(vote)
+                   url=law_dict['url']
+                   description=law_dict['description']
+                   initiators=law_dict['initiators'] # type: list
+                   law_obj=Law.createLaw(law_name,None,None,description,url) # type: Law
+                   for initiator in initiators:
+                       initiator_member=ElectedOfficial.select(graph,initiator).first()
+                       law_obj.proposed_by.add(initiator_member)
+               voting_details=get_vote_detail_dict("{}/{}".format(URLS.VOTES_BASE_URL,vote['url']))
+               vote_obj=Vote.createVoteFromJson(vote,law_obj,voting_details,graph)
+               graph.push(law_obj)
+               graph.push(vote_obj)
+           except Exception as e:
+               print(e)
 
 def get_vote_detail_dict(vote_url):
     res_dict={}
