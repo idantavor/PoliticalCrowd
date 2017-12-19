@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
-
+from google.auth.transport import requests
+from google.oauth2 import id_token
 from modules.backend.bl.UserService import isUserExist
 from src.modules.backend.common.APIConstants import *
 from src.modules.dal.GraphConnection import bolt_connect
@@ -9,11 +10,33 @@ app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
 
 graph = bolt_connect()
+auth_cache = {}
 
 @app.errorhandler(Exception)
 def defaultHandler(error):
     app.logger.error(str(error))
     return Response.FAILED, Response.CODE_FAILED
+
+def authenticate(token):
+    try:
+        if auth_cache[token] is not None and not auth_cache[token]:
+            raise ValueError('Illeagal Token')
+        idinfo = id_token.verify_firebase_token(token, requests.Request())
+
+        # need to validate request came from our app
+        # Or, if multiple clients access the backend server:
+        # idinfo = id_token.verify_oauth2_token(token, requests.Request())
+        # if idinfo['aud'] not in [CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]:
+
+        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            raise ValueError('Wrong issuer.')
+
+        return idinfo['sub']
+    except ValueError:
+        # Invalid token
+        app.logger.error("Invalid Token recieved")
+        auth_cache[token] = False
+        pass
 
 # api functions for first time login -- begin
 
@@ -72,7 +95,9 @@ def getCategoryNames():
 def register():
     app.logger.debug("got registration request")
     user_token = request.form.get(USER_TOKEN)
-    if isUserExist(graph, user_token):
+    #user_id = authenticate(user_token) need to be done
+    user_id = user_token # temporary
+    if isUserExist(graph, user_id):
         birth_year = request.form.get(BIRTH_YEAR)
         job = request.form.get(JOB)
         city = request.form.get(RESIDENCY)
