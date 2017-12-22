@@ -1,8 +1,15 @@
+from flask import jsonify
 from py2neo.ogm import *
 
 from src.modules.dal.relations.Relations import *
-from src.modules.backend.common.APIConstants import BLANK_TAG
+from src.modules.backend.common.APIConstants import BLANK_TAG, Rank, InvolvementLevel
+
 import datetime
+
+
+def selfUpdateGraph(graph, obj):
+    graph.begin(autocommit=True)
+    graph.push(obj)
 
 
 class Party(GraphObject):
@@ -29,6 +36,15 @@ class Party(GraphObject):
                 party.__setattr__(attr, party_json[attr])
         return party
 
+    @staticmethod
+    def safeSelect(graph, name):
+        try:
+            party = Party.select(graph=graph, primary_value=name).first()
+        except:
+            raise Exception(f"No party exist with name:{name}")
+
+        return party
+
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
 
@@ -41,12 +57,14 @@ class ElectedOfficial(GraphObject):
     img_url = Property()
     is_active = Property()
     homepage_url=Property()
+
     member_of_party = RelatedTo(Party)
-    laws_proposed=RelatedFrom("Law","proposed_by")
-    voted_for= RelatedFrom("Vote","elected_voted_for")
-    voted_against = RelatedFrom("Vote","elected_voted_against")
-    voted_abstained = RelatedFrom("Vote","elected_abstained")
-    vote_missing = RelatedFrom("Vote","elected_missing")
+
+    laws_proposed=RelatedFrom("Law",PROPOSED_BY)
+    voted_for= RelatedFrom("Vote",ELECTED_VOTED_FOR)
+    voted_against = RelatedFrom("Vote",ELECTED_VOTED_AGAINST)
+    voted_abstained = RelatedFrom("Vote",ELECTED_ABSTAINED)
+    vote_missing = RelatedFrom("Vote",ELECTED_MISSING)
 
     @classmethod
     def createElectedOfficial(cls, name, active, title):
@@ -67,6 +85,15 @@ class ElectedOfficial(GraphObject):
         official.homepage_url=official_json.get('homepage_url')
         return official
 
+    @staticmethod
+    def safeSelect(graph, name):
+        try:
+            elected = ElectedOfficial.select(graph=graph, primary_value=name).first()
+        except:
+            raise Exception(f"No elected official exists with name:{name}")
+
+        return elected
+
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
 
@@ -78,17 +105,14 @@ class Tag(GraphObject):
     name = Property()
     laws = RelatedFrom("Law", TAGGED_AS)
 
+    @staticmethod
+    def safeSelect(graph, tag_name):
+        try:
+            tag = Tag.select(graph=graph, primary_value=tag_name).first()
+        except:
+            raise Exception(f"No tag exists with name:{name}")
 
-class Votes(object):
-    def __init__(self):
-        self._upvotes = 0
-
-    def upvote(self):
-        self._upvotes += 1
-
-    def getScore(self):
-        return self._upvotes
-
+        return tag
 
 
 class Law(GraphObject):
@@ -99,13 +123,15 @@ class Law(GraphObject):
     description = Property()
     link = Property()
     tags_votes = Property()
-    votes=RelatedFrom("Vote","law")
-    proposed_by = RelatedTo(ElectedOfficial)
-    #tags = RelatedTo(Tag)
 
+    tagged_as = RelatedTo(Tag)
+    proposed_by = RelatedTo(ElectedOfficial)
+
+    elected_officials_votes = RelatedFrom("Vote", LAW)
+    users_voted_for = RelatedFrom("User", VOTED_FOR)
+    users_voted_againts = RelatedFrom("User", VOTED_AGAINST)
     users_taged = RelatedFrom("User", TAGGED_LAW)
 
-    #proposed_by = RelatedTo(ElectedOfficial)
 
     @classmethod
     def createLaw(cls, name, timestamp, status, description, link):
@@ -115,12 +141,32 @@ class Law(GraphObject):
         law.status = status
         law.description = description
         law.link = link
-#        law.tags_votes = {} # TagName : {class votes-> upvotes, downvotes}
+        law.tags_votes = {}  # {TagName : num_of_upvotes}
         return law
 
+    @staticmethod
+    def safeSelect(graph, name):
+        try:
+            law = Law.select(graph=graph, primary_value=name).first()
+        except:
+            raise Exception(f"No law by name:{name}")
+
+        return law
+
+    def tagLawByName(self, graph, tag_name):
+        tagNode = Tag.safeSelect(graph=graph, tag_name=tag_name)
+        if tag_name in self.tags_votes:
+            self.tags_votes[tag_name] += 1
+        else:
+            self.tagged_as.add(tagNode)
+            self.tags_votes[tag_name] = 1
+
+        graph.begin(autocommit=True)
+        graph.push(self)
 
     def __str__(self, *args, **kwargs):
         return self.__ogm__.node.__str__()
+
 
 class Vote(GraphObject):
     __primary__ = "raw_title"
@@ -129,14 +175,13 @@ class Vote(GraphObject):
     date=Property()
     url = Property()
     vote_num = Property()
-    law = RelatedTo(Law)
     meeting_num = Property()
+
+    law = RelatedTo(Law)
     elected_voted_for = RelatedTo(ElectedOfficial)
     elected_voted_against = RelatedTo(ElectedOfficial)
     elected_abstained = RelatedTo(ElectedOfficial)
     elected_missing = RelatedTo(ElectedOfficial)
-    user_voted_for = RelatedFrom("User", VOTED_FOR)
-    user_voted_against = RelatedFrom("User", VOTED_AGAINST)
 
     @classmethod
     def createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
@@ -168,20 +213,65 @@ class Vote(GraphObject):
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_against.add(member)
+
         return vote
+
+    @staticmethod
+    def safeSelect(graph, raw_title):
+        try:
+            vote = Vote.select(graph=graph, primary_value=raw_title).first()
+        except:
+            raise Exception(f"No vote exists with raw titile:{raw_title}")
+
+        return vote
+
 
 class JobCategory(GraphObject):
     __primarykey__ = "name"
 
     name = Property()
+
     users = RelatedFrom("User", WORK_AT)
+
+    @classmethod
+    def createJobCategory(cls, graph, job_name):
+        job = cls()
+        job.name = job_name
+        graph.begin(autocommit=True)
+        graph.push(job)
+
+    @staticmethod
+    def safeSelect(graph, job_name):
+        try:
+            job = JobCategory.select(graph=graph, primary_value=job_name).first()
+        except:
+            raise Exception(f"No job exist with title:{job_name}")
+
+        return job
 
 
 class Residency(GraphObject):
     __primarykey__ = "name"
 
     name = Property()
+
     users = RelatedFrom("User", RESIDING)
+
+    @classmethod
+    def createResidency(cls, graph, city_name):
+        residency = cls()
+        residency.name = city_name
+        graph.begin(autocommit=True)
+        graph.push(residency)
+
+    @staticmethod
+    def safeSelect(graph, name):
+        try:
+            city = Residency.select(graph=graph, primary_value=name).first()
+        except:
+            raise Exception(f"No city exist with name:{name}")
+
+        return city
 
 
 class User(GraphObject):
@@ -189,66 +279,120 @@ class User(GraphObject):
 
     token = Property()
     birth_year = Property(key="birthYear")
-    involvment_level = Property(key="involvmentLevel")
+    involvement_level = Property(key="involvmentLevel")
+    rank = Property(key="rank")
 
-    residency = RelatedTo(Residency)
-    job_category = RelatedTo(JobCategory)
+    residing = RelatedTo(Residency)
+    work_at = RelatedTo(JobCategory)
     associate_party = RelatedTo(Party)
     voted_for = RelatedTo(Law)
     voted_against = RelatedTo(Law)
     laws_tagged = RelatedTo(Law)
 
+    def __str__(self):
+        return jsonify({
+            "token": self.token,
+            "birth_year" : self.birth_year,
+            "involvment_level" : InvolvementLevel(self.involvement_level).value,
+            "rank" : Rank(self.rank)
+        })
+
     @classmethod
-    def createUser(cls, graph, token, job, birthYear, residancy, involvmentLevel, party):
+    def createUser(cls, graph, token, job, birthYear, residancy, involvementLevel, party):
         user = cls()
         user.token = token
+        user.rank = Rank.First.value
         user.birth_year = birthYear
-        user.involvment_level = involvmentLevel
-        user.associate_party = Party.select(graph, primary_value=party).first()
-        user.job_category = JobCategory.select(graph, primary_value=job).first()
-        user.residency = Residency.select(graph, primary_value=residancy).first()
+        user.involvement_level = involvementLevel
+        user.associate_party.add(Party.safeSelect(graph=graph, name=party))
+        user.work_at.add(JobCategory.safeSelect(graph=graph, job_name=job))
+        user.residing.add(Residency.safeSelect(graph=graph, name=residancy))
         trans = graph.begin()
         graph.push(user)
         trans.commit()
         return user
 
-    def getUserAge(self):
-        curr_year = datetime.datetime.now().year
-        return curr_year - int(self.birth_year)
+    @staticmethod
+    def userExists(graph, token):
+        try:
+            user = User.select(graph=graph, primary_value=token).first()
+            return True
+        except:
+            return False
 
-    def changeInvlovmentLevel(self, graph, involvment_level):
-        self.involvment_level = involvment_level
-        graph.begin(autocommit=True)
-        graph.push(self)
+    @staticmethod
+    def safeSelect(graph, token):
+        try:
+            user = User.select(graph=graph, primary_value=token).first()
+        except:
+            raise Exception(f"No user exist with token:{token}")
+
+        return user
+
+    def changeInvlovmentLevel(self, graph, involvement_level):
+        self.involvement_level = involvement_level
+        selfUpdateGraph(graph=graph, obj=self)
         return True
 
     def changeJobField(self, graph, job):
-        self.job_category = job
-        graph.begin(autocommit=True)
-        graph.push(self)
+        self.job_category.clear()
+        self.job_category = JobCategory.safeSelect(graph=graph, job_name=job)
+        selfUpdateGraph(graph=graph, obj=self)
+        return True
+
+    def updateRankIfNeeded(self):
+        number_of_votes = len(self.voted_for) + len(self.voted_against)
+        if number_of_votes < 15:
+            self.rank = Rank.First
+        elif number_of_votes < 30:
+            self.rank = Rank.Second
+        elif number_of_votes < 60:
+            self.rank = Rank.Third
+        elif number_of_votes < 70:
+            self.rank = Rank.Fourth
+        elif number_of_votes < 85:
+            self.rank = Rank.Fifth
+        else:
+            self.rank = Rank.Sixth
+
+
+    def changeResidency(self, graph, city):
+        self.residency.clear()
+        self.residency = Residency.safeSelect(graph=graph, name=city)
+        selfUpdateGraph(graph=graph, obj=self)
         return True
 
     def changeAssociateParty(self, graph, party):
-        self.associate_party = Party.select(graph=graph, primary_value=party).first()
-        graph.begin(autocommit=True)
-        graph.push(self)
+        self.residency.clear()
+        self.associate_party = Party.safeSelect(graph=graph, name=party)
+        selfUpdateGraph(graph=graph, obj=self)
         return True
 
     def voteLaw(self, graph, law_name, is_upvote=True):
-        law = Law.select(graph, primary_value=law_name).first()
+        law = Law.safeSelect(graph=graph, name=law_name)
         if is_upvote:
+            if law in self.voted_against:
+                self.voted_against.remove(law)
+
             self.voted_for.add(law)
         else:
+            if law in self.voted_for:
+                self.voted_for.remove(law)
+
             self.voted_against.add(law)
-        graph.begin(autocommit=True)
-        graph.push(self)
+
+        self.updateRankIfNeeded(graph)
+
+        selfUpdateGraph(graph=graph, obj=self)
 
     def tagLaw(self, graph, law_name, tags_names):
-        law = Law.select(graph=graph, primary_value=law_name).first()
+        law = Law.safeSelect(graph=graph, name=law_name)
         for tag_name in tags_names:
-            if tag_name != BLANK_TAG:
-               pass
-
+            if tag_name == BLANK_TAG:
+               continue
+            law.tagLawByName(graph=graph, tag_name=tag_name)
+        self.laws_tagged.add(law)
+        selfUpdateGraph(graph=graph, obj=self)
 
 
     def __str__(self, *args, **kwargs):
