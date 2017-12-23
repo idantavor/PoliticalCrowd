@@ -3,6 +3,7 @@ from py2neo.ogm import *
 
 from src.modules.dal.relations.Relations import *
 from src.modules.backend.common.APIConstants import BLANK_TAG, Rank, InvolvementLevel
+
 import datetime
 
 
