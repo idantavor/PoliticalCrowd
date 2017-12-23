@@ -1,9 +1,6 @@
 from src.modules.backend.bl import LawService
-from src.modules.backend.common.APIConstants import ELECTED_OFFICIAL
 from src.modules.dal.graphObjects.graphObjects import *
-from operator import itemgetter
 from src.modules.backend.app.WebAPI import app
-import itertools
 
 logger = app.logger
 
