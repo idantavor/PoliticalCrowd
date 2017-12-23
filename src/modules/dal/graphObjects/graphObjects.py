@@ -130,7 +130,7 @@ class Law(GraphObject):
     elected_officials_votes = RelatedFrom("Vote", LAW)
     users_voted_for = RelatedFrom("User", VOTED_FOR)
     users_voted_againts = RelatedFrom("User", VOTED_AGAINST)
-    users_taged = RelatedFrom("User", TAGGED_LAW)
+    users_tagged = RelatedFrom("User", TAGGED_LAW)
 
 
     @classmethod
