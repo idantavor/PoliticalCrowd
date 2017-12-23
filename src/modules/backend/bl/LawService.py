@@ -1,9 +1,10 @@
 from flask import json
 
-from modules.backend.app.WebAPI import app
-from modules.backend.bl.UserService import isUserExist
-from modules.backend.common.APIConstants import VOTED_FOR, VOTED_AGAINST
-from modules.dal.graphObjects.graphObjects import User
+from src.modules.backend.app.WebAPI import app
+from src.modules.backend.bl.UserService import isUserExist
+from src.modules.backend.common.APIConstants import VOTED_FOR, VOTED_AGAINST
+from src.modules.dal.graphObjects.graphObjects import User
+import itertools
 
 logger = app.logger
 
@@ -32,3 +33,17 @@ def getNewLaws(graph, user_id):
         return len(data), data
     else:
         raise Exception("ileagal operation")
+
+
+def getAllElectedVotedForLaw(law):
+    curr_vote = getLatestVote(law)
+    total_votes = list(curr_vote.elected_voted_for | curr_vote.elected_voted_against | curr_vote.elected_abstained)
+    return total_votes
+
+
+def getNumOfLawsByTag(graph, tag, num_of_laws):
+    laws = list(Law.select(graph=graph))
+    filtered_laws = laws if tag is None else list(filter(lambda law: tag in itertools.islice(sorted(law.tags_votes, key=itemgetter(1), reverse=True), 2), laws))
+    sorted_laws = filtered_laws.sort(key=lambda obj: obj.timestamp, reverse=True)
+    top_laws = itertools.islice(sorted_laws, num_of_laws)
+    return top_laws
