@@ -36,8 +36,8 @@ class UTILS:
     @staticmethod
     def send_mail(subject,_message,_from="bibi@gmail.com",_to=MAIL_RECIPIENTS):
         try:
-            message = """From: %s\nTo: %s\nSubject: %s\n\n%s
-            """ % (_from, ", ".join(_to), subject, _message)
+            message = """From: {}\nTo: {}\nSubject: {}\n\n{}
+            """.format(_from, ", ".join(_to), subject, _message)
             server = smtplib.SMTP("smtp.gmail.com", 587)
             server.ehlo()
             server.starttls()
@@ -45,8 +45,6 @@ class UTILS:
             server.sendmail(_from, _to, message,)
             server.close()
             print('successfully sent the mail')
-        except:
+        except Exception as e:
             print("failed to send mail")
-
-
-UTILS.send_mail("Message from crawler","blabla test")
+            raise e

@@ -1,10 +1,8 @@
 from flask import jsonify
 from py2neo.ogm import *
 
-from src.modules.dal.relations.Relations import *
-from src.modules.backend.common.APIConstants import BLANK_TAG, Rank, InvolvementLevel
-
-import datetime
+from backend.common.APIConstants import BLANK_TAG, Rank, InvolvementLevel
+from dal.relations.Relations import *
 
 
 def selfUpdateGraph(graph, obj):
@@ -41,7 +39,7 @@ class Party(GraphObject):
         try:
             party = Party.select(graph=graph, primary_value=name).first()
         except:
-            raise Exception(f"No party exist with name:{name}")
+            raise Exception("No party exist with name:{}".format(name))
 
         return party
 
@@ -90,7 +88,7 @@ class ElectedOfficial(GraphObject):
         try:
             elected = ElectedOfficial.select(graph=graph, primary_value=name).first()
         except:
-            raise Exception(f"No elected official exists with name:{name}")
+            raise Exception("No elected official exists with name:{}".format(name))
 
         return elected
 
@@ -110,7 +108,7 @@ class Tag(GraphObject):
         try:
             tag = Tag.select(graph=graph, primary_value=tag_name).first()
         except:
-            raise Exception(f"No tag exists with name:{name}")
+            raise Exception("No tag exists with name:{}".format(tag_name))
 
         return tag
 
@@ -141,7 +139,7 @@ class Law(GraphObject):
         law.status = status
         law.description = description
         law.link = link
-        law.tags_votes = {}  # {TagName : num_of_upvotes}
+        law.tags_votes = []  # This list should contain tag GraphObject instead of a dictionary that is not supported
         return law
 
     @staticmethod
@@ -149,7 +147,7 @@ class Law(GraphObject):
         try:
             law = Law.select(graph=graph, primary_value=name).first()
         except:
-            raise Exception(f"No law by name:{name}")
+            raise Exception("No law by name:{}".format(name))
 
         return law
 
@@ -169,7 +167,7 @@ class Law(GraphObject):
 
 
 class Vote(GraphObject):
-    __primary__ = "raw_title"
+    __primarykey__ = "raw_title"
     raw_title=Property()
     type=Property()
     date=Property()
@@ -184,7 +182,7 @@ class Vote(GraphObject):
     elected_missing = RelatedTo(ElectedOfficial)
 
     @classmethod
-    def createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
+    def                                           createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
         vote = cls()
         for attr in [attrib for attrib in dir(vote) if "__" not in attrib]:
             if attr in vote_json:
@@ -221,7 +219,7 @@ class Vote(GraphObject):
         try:
             vote = Vote.select(graph=graph, primary_value=raw_title).first()
         except:
-            raise Exception(f"No vote exists with raw titile:{raw_title}")
+            raise Exception("No vote exists with raw titile:{}".format(raw_title))
 
         return vote
 
@@ -245,7 +243,7 @@ class JobCategory(GraphObject):
         try:
             job = JobCategory.select(graph=graph, primary_value=job_name).first()
         except:
-            raise Exception(f"No job exist with title:{job_name}")
+            raise Exception("No job exist with title:{}".format(job_name))
 
         return job
 
@@ -269,7 +267,7 @@ class Residency(GraphObject):
         try:
             city = Residency.select(graph=graph, primary_value=name).first()
         except:
-            raise Exception(f"No city exist with name:{name}")
+            raise Exception("No city exist with name:{}".format(name))
 
         return city
 
@@ -325,7 +323,7 @@ class User(GraphObject):
         try:
             user = User.select(graph=graph, primary_value=token).first()
         except:
-            raise Exception(f"No user exist with token:{token}")
+            raise Exception("No user exist with token:{}".format(token))
 
         return user
 

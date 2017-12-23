@@ -2,7 +2,7 @@ import datetime
 
 from py2neo import Graph
 
-from src.modules.dal.graphObjects.graphObjects import *
+from dal.graphObjects.graphObjects import *
 
 
 def http_connect(ip="104.196.62.104", uname="neo4j", passwd="bibikiller"):

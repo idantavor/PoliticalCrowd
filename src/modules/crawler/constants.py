@@ -57,3 +57,24 @@ VOTE_TYPE_IMAGE_LABELS={
 }
 
 MAIL_RECIPIENTS=['i.tavor@gmail.com']
+
+class MAIL_CONSTANTS:
+    class SUBJECTS:
+        CRAWLER_ERROR="[ERROR] Knesset Crawler encountered an error"
+        CRAWLER_INFO = "[INFO] Knesset Crawler report"
+
+    class MESSAGES:
+        @staticmethod
+        def get_start_message(date):
+            return "Crawler started , crawling from {}".format(date)
+
+        @staticmethod
+        def get_summary_message(summary_list):
+            ret="Crawler finished iteration -total of {} objects where added to the db\n operations:{}".format(len(summary_list))
+            if len(summary_list)>0:
+                ret+="\n-".join(summary_list)
+            return ret
+
+        @staticmethod
+        def get_error_message(error):
+            return "Crawler encountered an error:\n{}".format(str(error))
