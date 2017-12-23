@@ -11,6 +11,7 @@ VOTE = "vote"
 LAW_NAME = "law_name"
 VOTED_FOR = "VOTED_FOR"
 VOTED_AGAINST = "VOTED_AGAINST"
+ELECTED_OFFICIAL = "ElectedOfficial"
 
 
 class InvolvementLevel(Enum):
