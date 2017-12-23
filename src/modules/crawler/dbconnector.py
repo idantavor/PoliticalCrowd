@@ -5,11 +5,11 @@ from py2neo import Graph
 from src.modules.dal.graphObjects.graphObjects import *
 
 
-def http_connect():
-    return Graph("http://104.196.62.104:7474/db/data/", username="neo4j", password="bibikiller")
+def http_connect(ip="104.196.62.104", uname="neo4j", passwd="bibikiller"):
+    return Graph("http://{}:7474/db/data/".format(ip), username=uname, password=passwd)
 
-def bolt_connect():
-    return Graph("bolt://104.196.62.104:7687/db/data/", username="neo4j", password="bibikiller")
+def bolt_connect(ip="104.196.62.104", uname="neo4j", passwd="bibikiller"):
+    return Graph("bolt://{}:7687/db/data/".format(ip), username=uname, password=passwd)
 
 
 def initDb():

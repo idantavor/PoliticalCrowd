@@ -47,6 +47,7 @@ class LAW_PAGE_CONSTANTS :
     DOCX_END_DELIMITER = "------------------------"
     LAW_PAGE_QUERY_URL = "http://main.knesset.gov.il/Activity/Legislation/Laws/Pages/LawSuggestionsSearch.aspx?t=lawsuggestionssearch&st=currentknesset&wn={}&ki=20&sb=LatestSessionDate&so=D"
     LAW_PAGE_URL   = "http://main.knesset.gov.il/Activity/Legislation/Laws/Pages/{}"
+    LAW_PAGE_INITIATORS = "חברי הכנסת היוזמים"
 
 VOTE_TYPE_IMAGE_LABELS={
     "ABSTAINED":"../images/Vote_h_3.gif",
@@ -54,35 +55,5 @@ VOTE_TYPE_IMAGE_LABELS={
     "AGAINST":"../images/Vote_h_2.gif",
     "DIDNT_VOTE":"../images/Vote_h_0.gif"
 }
-class UTILS:
 
-    @staticmethod
-    def single_get_url(url,retries=3,cookies=None):
-        """
-        get resposne
-        :param url:
-        :param retries:
-        :param cookies:
-        :return:
-        """
-        attempt = 1
-        while attempt <= retries:
-            res = requests.get(url,cookies=cookies)
-            if res.status_code != requests.codes.ok:
-                attempt+=1
-                continue
-            return res
-        raise Exception("failed to get response for {}".format(url))
-
-    @staticmethod
-    def get_url(url, encoding='windows-1255', _retries=3, multiple=True, get_cookies=False,cookies=None):
-        print("getting {}".format(url))
-        res = UTILS.single_get_url(url,retries=_retries,cookies=cookies)
-        cookie_jar=res.cookies
-        if multiple:
-            res=UTILS.single_get_url(url,cookies=cookie_jar)
-            cookie_jar.update(res.cookies)
-        if get_cookies:
-            return cookie_jar,str(res.content,encoding=encoding,errors='ignore')
-        else:
-            return str(res.content,encoding=encoding,errors='ignore')
+MAIL_RECIPIENTS=['i.tavor@gmail.com']

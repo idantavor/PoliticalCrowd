@@ -143,6 +143,7 @@ def are_date_equal(json_date,html_date) :
 
 
 def get_law_page_url_from_json(vote_json) :
+
     #build the search term
     search_term = vote_json["raw_title"]
     date = vote_json["date"]
@@ -150,7 +151,7 @@ def get_law_page_url_from_json(vote_json) :
     # date = vote_json["time"]
     search_term = parse_title(search_term)
     #build the query url
-    query_url = LAW_PAGE_CONSTANTS.LAW_PAGE_QUERY_URL.format(search_term)
+    query_url = " ".join(LAW_PAGE_CONSTANTS.LAW_PAGE_QUERY_URL.format(search_term).strip().split())
     res = requests.get(query_url)
     #print(str(res.content, encoding='utf-8'))
     html_tree = html.fromstring(str(res.content, encoding='utf-8'))
@@ -162,7 +163,7 @@ def get_law_page_url_from_json(vote_json) :
             possible_date = td.xpath("./text()")[0]
             if are_date_equal(date,possible_date) :
                 law_page_url = tr.xpath(".//a")[0].attrib['href']
-                break;
+                break
         if law_page_url != "" :
             break
     if law_page_url != "" :
