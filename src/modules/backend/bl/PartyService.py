@@ -15,7 +15,7 @@ def getPartyEfficiancy(graph, party, laws):
 
 
 
-def getAllPartiesEfficiancyByTag(graph, tag, num_of_laws_backward):
+def getAllPartiesEfficiencyByTag(graph, tag, num_of_laws_backward):
     logger.debug(f"params: tag={tag}, num_of_laws={num_of_laws_backward}")
 
     parties_efficiancy = dict()
