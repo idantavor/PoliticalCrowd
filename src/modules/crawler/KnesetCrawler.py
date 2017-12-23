@@ -182,7 +182,7 @@ def add_votes_to_db(date_from='1/8/2003'):
        if res is not None:
            continue
        else:
-           law_name = LawPage.parse_title(vote['raw_title'])
+           law_name = LawPage.parse_title_for_time(vote['raw_title'])
            #check if the law is already in the db
            try:
                law_obj=Law.select(graph,primary_value=law_name).first() #type: Law
