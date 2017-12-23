@@ -2,8 +2,8 @@ from flask import json
 
 from modules.backend.app.WebAPI import app
 from modules.backend.bl.UserService import isUserExist
-from modules.backend.common.APIConstants import VOTED_FOR, VOTED_AGAINST
-from modules.dal.graphObjects.graphObjects import User
+from modules.backend.common.APIConstants import VOTED_FOR, VOTED_AGAINST, VOTED_ABSTAINED, VOTED_MISSING
+from modules.dal.graphObjects.graphObjects import User, Law
 
 logger = app.logger
 
@@ -32,3 +32,54 @@ def getNewLaws(graph, user_id):
         return len(data), data
     else:
         raise Exception("ileagal operation")
+
+def getLawsByDateInterval(graph, start_date, end_date):
+    law_set = Law.select(graph)\
+        .where("{}<= _.timestamp <={}".format(start_date, end_date))
+    res = {}
+    for law in law_set:
+        res[law.name] = law.__dict__
+    return res
+
+
+def getLatestVote(law):
+    return sorted(list(law.elected_officials_votes), key=lambda v : v.date, reverse=True)[0]
+
+def insertVotesByType(ret, vote_type, key_name):
+    for elected in list(vote_type):
+        party = list(elected.member_of_party)[0]
+        if ret[party.name] is None:
+            ret[party.name] = {key_name : 1}
+        elif ret[party.name][key_name] is None:
+            ret[party.name][key_name] = 1
+        else:
+            ret[party.name][key_name] = ret[party.name][key_name] + 1
+
+def getLawStats(graph, law_name, user_vote, user_id):
+    law = Law.safeSelect(graph= graph, name= law_name)
+    votes = {}
+    vote = getLatestVote(law)
+    insertVotesByType(ret=votes, vote_type=vote.elected_voted_for, key_name=VOTED_FOR)
+    insertVotesByType(ret=votes, vote_type=vote.elected_voted_against, key_name=VOTED_AGAINST)
+    insertVotesByType(ret=votes, vote_type=vote.elected_missing, key_name=VOTED_ABSTAINED)
+    insertVotesByType(ret=votes, vote_type=vote.elected_abstained, key_name=VOTED_MISSING)
+
+    user = User.safeSelect(graph = graph, token=user_id)
+    user_party = list(user.associate_party)[0].name
+
+    res = {}
+    for party in votes:
+        total_votes = sum(x for x in party.values())
+        voted_like_user = party[user_vote]
+        res[party.name] = {"match": (voted_like_user / total_votes),
+                           "is_users_party" : True if user_party == party.name else False}
+
+    return res
+
+
+
+
+
+
+
+

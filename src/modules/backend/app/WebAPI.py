@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
-from modules.backend.bl.LawService import submitVoteAndTags, getNewLaws
+from modules.backend.bl.LawService import submitVoteAndTags, getNewLaws, getLawsByDateInterval
 from modules.backend.bl.PartyService import getAllPartiesEfficiencyByTag
 from modules.backend.bl.ProfileService import updatePersonlInfo
 from modules.backend.bl.UserService import isUserExist
@@ -24,8 +24,7 @@ def defaultHandler(error):
 
 def authenticate(token):
     #temporary
-    #return token
-
+    return token
 
     try:
         if auth_cache.get(token) is not None and not auth_cache(token):
@@ -85,9 +84,10 @@ def getJobCategories():
     return job_categories_names
 
 
-#@app.route("/getElectedOfficials", methods=['GET'])
+@app.route("/getElectedOfficials", methods=['POST'])
 def getElectedOfficials():
     app.logger.debug("got elected officials request")
+    getUsersId(request)
     elected_officials = ElectedOfficial.select(graph)
     elected_official_names = []
     for elected_official in elected_officials:
@@ -237,6 +237,7 @@ def lawsByDateInterval():
     getUsersId(request)
     start_date = request.form.get(START_DATE)
     end_date = request.form.get(END_DATE)
+    jsonify(getLawsByDateInterval(graph = graph, start_date = start_date, end_date = end_date))
 
 
 
@@ -258,6 +259,7 @@ def lawVoteSubmit():
     vote = request.form.get(VOTE)
     tags = request.form.get(TAGS)
     submitVoteAndTags(graph, law_name, tags, user_id, vote)
+
     return jsonify("Success")
 
 
@@ -266,6 +268,7 @@ def lawVoteSubmit():
 @app.route("/updatePersonalInfo", methods=['POST'])
 def updatePersonalInfo():
     user_id = getUsersId(request)
+    app.logger.info("recieved request to update presonal info from [" + str(user_id) + "]")
     job = request.form.get(JOB)
     residency = request.form.get(RESIDENCY)
     party = request.form.get(PARTY)

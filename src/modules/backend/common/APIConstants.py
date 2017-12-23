@@ -12,6 +12,8 @@ LAW_NAME = "law_name"
 
 VOTED_FOR = "voted_for"
 VOTED_AGAINST = "voted_against"
+VOTED_ABSTAINED = "voted_abstained"
+VOTED_MISSING = "voted_missing"
 TAGS= "tags"
 NUM_OF_LAWS_BACKWARDS="num_of_laws_backwards"
 ELECTED_OFFICIAL="elected_official"
