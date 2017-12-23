@@ -23,8 +23,8 @@ class Response(Enum):
     CODE_SUCCESS = 200
 
 class Rank(Enum):
-    First = ""
-    Second = ""
+    First = "Tourist"
+    Second = "Citizen"
     Third = ""
     Fourth = ""
     Fifth = ""
