@@ -9,6 +9,7 @@ INVOLVEMENT_LEVEL = "involvement_level"
 BLANK_TAG = "blank_tag"
 VOTE = "vote"
 LAW_NAME = "law_name"
+
 VOTED_FOR = "voted_for"
 VOTED_AGAINST = "voted_against"
 TAGS= "tags"
@@ -16,7 +17,6 @@ NUM_OF_LAWS_BACKWARDS="num_of_laws_backwards"
 ELECTED_OFFICIAL="elected_official"
 START_DATE = "start_date"
 END_DATE = "end_date"
-
 
 class InvolvementLevel(Enum):
     LOW = 1
