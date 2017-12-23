@@ -3,6 +3,7 @@ from py2neo.ogm import *
 
 from src.modules.dal.relations.Relations import *
 from src.modules.backend.common.APIConstants import BLANK_TAG, Rank, InvolvementLevel
+
 import datetime
 
 
@@ -280,6 +281,7 @@ class User(GraphObject):
     birth_year = Property(key="birthYear")
     involvement_level = Property(key="involvmentLevel")
     rank = Property(key="rank")
+    score = Property(key="score")
 
     residing = RelatedTo(Residency)
     work_at = RelatedTo(JobCategory)
@@ -303,6 +305,7 @@ class User(GraphObject):
         user.rank = Rank.First.value
         user.birth_year = birthYear
         user.involvement_level = involvementLevel
+        user.score = 0
         user.associate_party.add(Party.safeSelect(graph=graph, name=party))
         user.work_at.add(JobCategory.safeSelect(graph=graph, job_name=job))
         user.residing.add(Residency.safeSelect(graph=graph, name=residancy))
@@ -340,16 +343,16 @@ class User(GraphObject):
         return True
 
     def updateRankIfNeeded(self):
-        number_of_votes = len(self.voted_for) + len(self.voted_against)
-        if number_of_votes < 15:
+        self.score += 1
+        if self.score < 15:
             self.rank = Rank.First
-        elif number_of_votes < 30:
+        elif self.score < 30:
             self.rank = Rank.Second
-        elif number_of_votes < 60:
+        elif self.score < 60:
             self.rank = Rank.Third
-        elif number_of_votes < 70:
+        elif self.score < 70:
             self.rank = Rank.Fourth
-        elif number_of_votes < 85:
+        elif self.score < 85:
             self.rank = Rank.Fifth
         else:
             self.rank = Rank.Sixth
@@ -387,8 +390,6 @@ class User(GraphObject):
     def tagLaw(self, graph, law_name, tags_names):
         law = Law.safeSelect(graph=graph, name=law_name)
         for tag_name in tags_names:
-            if tag_name == BLANK_TAG:
-               continue
             law.tagLawByName(graph=graph, tag_name=tag_name)
         self.laws_tagged.add(law)
         selfUpdateGraph(graph=graph, obj=self)
