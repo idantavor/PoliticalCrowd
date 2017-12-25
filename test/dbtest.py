@@ -97,17 +97,18 @@ def relatedToQueries():
 #relatedFromQueries()
 #relatedToQueries()
 
-graph = bolt_connect()
 
-a = Residency()
-a.name="תל אביב"
-
-graph.push(a)
-
-a = JobCategory()
-a.name="זגג"
-
-graph.push(a)
+# graph = bolt_connect()
+#
+# a = Residency()
+# a.name="תל אביב"
+#
+# graph.push(a)
+#
+# a = JobCategory()
+# a.name="זגג"
+#
+# graph.push(a)
 
 
 

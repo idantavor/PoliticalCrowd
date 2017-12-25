@@ -260,6 +260,8 @@ def lawVoteSubmit():
     tags = request.form.get(TAGS)
     submitVoteAndTags(graph, law_name, tags, user_id, vote)
 
+    graph.run("MATCH(v:Vote) MATCH(l:Law) MATCH( ")
+
     return jsonify("Success")
 
 
