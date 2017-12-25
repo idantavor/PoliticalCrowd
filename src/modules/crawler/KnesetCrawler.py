@@ -56,6 +56,11 @@ def get_party_and_role_from_role_title(role_title):
     role = None if role_suffix == "" else role_suffix
     return party, role
 
+def normalize(string):
+    if string is None:
+        return None
+    else:
+        return " ".join(string.strip().split())
 
 def get_member_dict(member_page_url, image_link, member_name):
     logger.info("getting url for member {}".format(member_name))
@@ -219,8 +224,11 @@ def add_votes_to_db(date_from='1/8/2003'):
                     else:
                         law_obj.description = description
                     for initiator in initiators:
-                        initiator_member = ElectedOfficial.select(graph, initiator).first()
-                        law_obj.proposed_by.add(initiator_member)
+                        initiator_member = ElectedOfficial.select(graph, normalize(initiator)).first()
+                        if initiator_member is None:
+                            logger.error("fail to retreive initiator elected official {} from db by serching for".format(initiator,normalize(initiator)))
+                        else:
+                            law_obj.proposed_by.add(initiator_member)
                 voting_details = get_vote_detail_dict("{}/{}".format(URLS.VOTES_BASE_URL, vote['url']))
                 vote_obj = Vote.createVoteFromJson(vote, law_obj, voting_details, graph)
                 summary_list.append("new vote added :{}".format(vote['raw_title']))
