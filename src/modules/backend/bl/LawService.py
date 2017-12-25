@@ -99,6 +99,16 @@ def calculateStats(voted_for, voted_against, missing, abstained):
 
     return res
 
+def createStatsResponse(user_party, user_vote, votes):
+    res = {}
+    for party_name, party_vote in votes.items():
+        total_votes = sum(x["count"] for x in party_vote.values())
+        voted_like_user = party_vote[user_vote]["count"]
+        res[party_name] = {"match": (voted_like_user / total_votes),
+                           "is_users_party": True if user_party == party_name else False,
+                           "elected_voted_for": party_vote["elected_officials"]}
+    return res
+
 
 def getLawStats(graph, law_name, user_vote, user_id):
 
@@ -113,20 +123,14 @@ def getLawStats(graph, law_name, user_vote, user_id):
     missing = countPartyVotes(missing)
     abstained = countPartyVotes(abstained)
 
-
     votes = calculateStats(voted_for, voted_against, missing, abstained)
-
 
     user = User.safeSelect(graph = graph, token=user_id)
     user_party = list(user.associate_party)[0].name
 
-    res = {}
-    for party_name, party_vote in votes.items():
-        total_votes = sum(x["count"] for x in party_vote.values())
-        voted_like_user = party_vote[user_vote]["count"]
-        res[party_name] = {"match": (voted_like_user / total_votes),
-                           "is_users_party" : True if user_party == party_name else False,
-                           "elected_voted_for" : party_vote["elected_officials"]}
+    res = createStatsResponse(user_party, user_vote, votes)
 
     return res
+
+
 
