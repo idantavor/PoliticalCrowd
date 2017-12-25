@@ -3,7 +3,7 @@ import time
 from py2neo import Graph
 
 from src.modules.dal.GraphConnection import bolt_connect
-from src.modules.dal.graphObjects.graphObjects import User, Residency, JobCategory
+from src.modules.dal.graphObjects.graphObjects import User, Residency, JobCategory, ELECTED_VOTED_FOR
 from src.modules.dal.graphObjects.graphObjects import Party
 from src.modules.dal.graphObjects.graphObjects import ElectedOfficial
 from src.modules.dal.graphObjects.graphObjects import Law
@@ -98,7 +98,13 @@ def relatedToQueries():
 #relatedToQueries()
 
 
-# graph = bolt_connect()
+graph = bolt_connect()
+#a = graph.run("MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:ELECTED_VOTED_FOR]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name CONTAINS 'בריאות' return e, p.name")
+#o  = ElectedOfficial.select(graph,primary_value="דוד אזולאי")\
+#    .where("'{}' IN _.member_of_party".format('ש"ס'))
+query = "MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:{}]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name CONTAINS '{}' return e, p.name"
+voted_for = graph.run(query.format(ELECTED_VOTED_FOR,"מחלת ה-SMA")).data()
+print(voted_for)
 #
 # a = Residency()
 # a.name="תל אביב"
