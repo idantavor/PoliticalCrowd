@@ -112,7 +112,7 @@ def createStatsResponse(user_party, user_vote, votes):
 
 def getLawStats(graph, law_name, user_vote, user_id):
 
-    query = "MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:{}]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name CONTAINS '{}' return e, p.name"
+    query = "MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:{}]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name = '{}' return e, p.name"
     voted_for = graph.run(query.format(ELECTED_VOTED_FOR,law_name)).data()
     voted_against = graph.run(query.format(ELECTED_VOTED_AGAINST, law_name)).data()
     missing = graph.run(query.format(ELECTED_MISSING, law_name)).data()
