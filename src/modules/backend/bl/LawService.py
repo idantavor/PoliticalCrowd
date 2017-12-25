@@ -1,4 +1,5 @@
 from flask import json
+from py2neo import Graph
 
 from src.modules.backend.app.WebAPI import app
 from src.modules.backend.bl.UserService import isUserExist
@@ -38,12 +39,17 @@ def getNewLaws(graph, user_id):
 
 
 # TODO Ram check if curr_vote.elected_voted_for return GraphObject or only the primary key
-def getAllElectedVotedForLaw(graph, law):
+def getAllElectedVotedInLaw(graph, law):
     curr_vote = getLatestVote(law)
+    # total_votes = graph.cypher.execute(f"MATCH ")
     # total_votes = ElectedOfficial.select(graph=graph).where(f"'{curr_vote.raw_title}' in _.voted_for")
-    total_votes = list(curr_vote.elected_voted_for | curr_vote.elected_voted_against | curr_vote.elected_abstained)
+    # total_votes = list(curr_vote.elected_voted_for | curr_vote.elected_voted_against | curr_vote.elected_abstained)
     return total_votes
 
+
+def getAllElectedInPartyVotedInLaw(graph, law, party):
+    curr_vote = getLatestVote(law)
+    return list(graph.run(f"MATCH (e:{ElectedOfficial.__class__.name"))
 
 def getNumOfLawsByTag(graph, tag, num_of_laws):
     filtered_laws = list(Law.select(graph=graph)) if tag is None else list(Law.select(graph=graph).where(f"'{tag}' in _.tagged_as")) ## TODO check if correct with db

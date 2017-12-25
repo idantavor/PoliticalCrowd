@@ -153,11 +153,14 @@ class Law(GraphObject):
 
     def tagLawByName(self, graph, tag_name):
         tagNode = Tag.safeSelect(graph=graph, tag_name=tag_name)
-        if tag_name in self.tags_votes:
-            self.tags_votes[tag_name] += 1
+        tags_as_dict = dict(self.tags_votes)
+        if tag_name in tags_as_dict:
+            tags_as_dict[tag_name] += 1
         else:
             self.tagged_as.add(tagNode)
-            self.tags_votes[tag_name] = 1
+            tags_as_dict[tag_name] = 1
+
+        self.tags_votes = list(tags_as_dict.items())
 
         graph.begin(autocommit=True)
         graph.push(self)
