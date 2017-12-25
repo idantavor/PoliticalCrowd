@@ -9,6 +9,7 @@ logger = app.logger
 NUM_OF_PROPOSALS = "num_of_proposals"
 ELECTED_PROPOSALS = "elected_proposals"
 
+
 def _getPartyEfficiancy(graph, party, laws):
     num_of_members = len(party.party_members)
     wanted_num_of_votes = len(laws) * num_of_members
@@ -17,7 +18,7 @@ def _getPartyEfficiancy(graph, party, laws):
     logger.debug(f"Find efficiency for party: {party.name}")
 
     for law in laws:
-        total_votes = LawService.getAllElectedVotedForLaw(law)
+        total_votes = LawService.getAllElectedVotedForLaw(graph=graph, law=law)
         real_num_of_votes += len(list(filter(lambda elected_official: elected_official in party.party_members, total_votes)))
 
     logger.debug(f"for party:{party.name}, wanted is:{wanted_num_of_votes}, real is:{real_num_of_votes} -> Efficiency is:{real_num_of_votes / wanted_num_of_votes}")

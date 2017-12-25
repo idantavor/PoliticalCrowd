@@ -3,7 +3,7 @@ from flask import json
 from src.modules.backend.app.WebAPI import app
 from src.modules.backend.bl.UserService import isUserExist
 from src.modules.backend.common.APIConstants import VOTED_FOR, VOTED_AGAINST, VOTED_ABSTAINED, VOTED_MISSING
-from src.modules.dal.graphObjects.graphObjects import User, Law
+from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial
 import itertools
 from operator import itemgetter
 
@@ -37,15 +37,19 @@ def getNewLaws(graph, user_id):
         raise Exception("ileagal operation")
 
 
-def getAllElectedVotedForLaw(law):
+# TODO Ram check if curr_vote.elected_voted_for return GraphObject or only the primary key
+def getAllElectedVotedForLaw(graph, law):
     curr_vote = getLatestVote(law)
+    # total_votes = ElectedOfficial.select(graph=graph).where(f"'{curr_vote.raw_title}' in _.voted_for")
     total_votes = list(curr_vote.elected_voted_for | curr_vote.elected_voted_against | curr_vote.elected_abstained)
     return total_votes
 
 
 def getNumOfLawsByTag(graph, tag, num_of_laws):
-    laws = list(Law.select(graph=graph))
-    filtered_laws = laws if tag is None else list(filter(lambda law: tag in itertools.islice(sorted(law.tags_votes, key=itemgetter(1), reverse=True), 2), laws))
+    filtered_laws = list(Law.select(graph=graph)) if tag is None else list(Law.select(graph=graph).where(f"'{tag}' in _.tagged_as")) ## TODO check if correct with db
+
+    # law = list(Law.select(graph=graph))
+    # filtered_laws = laws if tag is None else list(filter(lambda law: tag in itertools.islice(sorted(law.tags_votes, key=itemgetter(1), reverse=True), 2), laws))
     sorted_laws = filtered_laws.sort(key=lambda obj: obj.timestamp, reverse=True)
     top_laws = itertools.islice(sorted_laws, num_of_laws)
     return top_laws
