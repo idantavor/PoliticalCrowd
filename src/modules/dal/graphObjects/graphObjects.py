@@ -70,6 +70,9 @@ class ElectedOfficial(GraphObject):
         ret.name = name
         ret.active = active
         ret.title = title
+
+        ret.select()
+
         return ret
 
     @classmethod

@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
-from modules.backend.bl.LawService import submitVoteAndTags, getNewLaws, getLawsByDateInterval
+from modules.backend.bl.LawService import submitVoteAndTags, getNewLaws, getLawsByDateInterval, getLawStats
 from modules.backend.bl.PartyService import getAllPartiesEfficiencyByTag
 from modules.backend.bl.ProfileService import updatePersonlInfo
 from modules.backend.bl.UserService import isUserExist
@@ -258,11 +258,12 @@ def lawVoteSubmit():
     law_name = request.form.get(LAW_NAME)
     vote = request.form.get(VOTE)
     tags = request.form.get(TAGS)
+
     submitVoteAndTags(graph, law_name, tags, user_id, vote)
 
-    graph.run("MATCH(v:Vote) MATCH(l:Law) MATCH( ")
+    law_stats = getLawStats(graph=graph, law_name=law_name, user_vote=vote,user_id=user_id)
 
-    return jsonify("Success")
+    return jsonify(law_stats)
 
 
 #Profile

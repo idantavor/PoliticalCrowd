@@ -1,6 +1,8 @@
 from flask import json
 from py2neo import Graph
 
+from modules.backend.common.CommonUtils import runQueryOnGraph
+from modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
 from src.modules.backend.app.WebAPI import app
 from src.modules.backend.bl.UserService import isUserExist
 from src.modules.backend.common import CommonUtils
@@ -75,37 +77,65 @@ def getLawsByDateInterval(graph, start_date, end_date):
     return res
 
 
-def getLatestVote(law):
-    return sorted(list(law.elected_officials_votes), key=lambda v : v.date, reverse=True)[0]
-
-def insertVotesByType(ret, vote_type, key_name):
-    for elected in list(vote_type):
-        party = list(elected.member_of_party)[0]
-        if ret[party.name] is None:
-            ret[party.name] = {key_name : 1}
-        elif ret[party.name][key_name] is None:
-            ret[party.name][key_name] = 1
+def countPartyVotes(data):
+    res = {}
+    for selection in data:
+        if res[selection["p.name"]] is None:
+            res[selection["p.name"]]= {"count" : 1,
+                                       "elected_officials" : [selection["e"].properties]}
         else:
-            ret[party.name][key_name] = ret[party.name][key_name] + 1
+            res[selection["p.name"]] = {"count" : res[selection["p.name"]]["count"] +1,
+                                        "elected_officials": res[selection["p.name"]]["elected_officials"].append(selection["e"].properties)}
+    return res
+
+def calculateStats(voted_for, voted_against, missing, abstained):
+    res = {}
+    for party, votes in voted_for.items():
+        res[party] = {"for" : votes}
+
+    for party, votes in voted_against.items():
+        res[party]["against"] = votes
+
+    for party, votes in missing.items():
+        res[party]["missing"] = votes
+
+    for party, votes in abstained.items():
+        res[party]["abstained"] = votes
+
+    return res
+
+def createStatsResponse(user_party, user_vote, votes):
+    res = {}
+    for party_name, party_vote in votes.items():
+        total_votes = sum(x["count"] for x in party_vote.values())
+        voted_like_user = party_vote[user_vote]["count"]
+        res[party_name] = {"match": (voted_like_user / total_votes),
+                           "is_users_party": True if user_party == party_name else False,
+                           "elected_voted_for": party_vote["elected_officials"]}
+    return res
+
 
 def getLawStats(graph, law_name, user_vote, user_id):
-    law = Law.safeSelect(graph= graph, name= law_name)
-    votes = {}
-    vote = getLatestVote(law)
-    insertVotesByType(ret=votes, vote_type=vote.elected_voted_for, key_name=VOTED_FOR)
-    insertVotesByType(ret=votes, vote_type=vote.elected_voted_against, key_name=VOTED_AGAINST)
-    insertVotesByType(ret=votes, vote_type=vote.elected_missing, key_name=VOTED_ABSTAINED)
-    insertVotesByType(ret=votes, vote_type=vote.elected_abstained, key_name=VOTED_MISSING)
+
+    query = "MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:{}]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name = '{}' return e, p.name"
+    voted_for = graph.run(query.format(ELECTED_VOTED_FOR,law_name)).data()
+    voted_against = graph.run(query.format(ELECTED_VOTED_AGAINST, law_name)).data()
+    missing = graph.run(query.format(ELECTED_MISSING, law_name)).data()
+    abstained = graph.run(query.format(ELECTED_ABSTAINED, law_name)).data()
+
+    voted_for = countPartyVotes(voted_for)
+    voted_against = countPartyVotes(voted_against)
+    missing = countPartyVotes(missing)
+    abstained = countPartyVotes(abstained)
+
+    votes = calculateStats(voted_for, voted_against, missing, abstained)
 
     user = User.safeSelect(graph = graph, token=user_id)
     user_party = list(user.associate_party)[0].name
 
-    res = {}
-    for party in votes:
-        total_votes = sum(x for x in party.values())
-        voted_like_user = party[user_vote]
-        res[party.name] = {"match": (voted_like_user / total_votes),
-                           "is_users_party" : True if user_party == party.name else False}
+    res = createStatsResponse(user_party, user_vote, votes)
 
     return res
+
+
 
