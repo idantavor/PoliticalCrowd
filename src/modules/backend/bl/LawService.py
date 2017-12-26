@@ -3,11 +3,12 @@ from py2neo import Graph
 
 from src.modules.backend.app.WebAPI import app
 from src.modules.backend.bl.UserService import isUserExist
-from src.modules.backend.common.APIConstants import VOTED_FOR, VOTED_AGAINST, VOTED_ABSTAINED, VOTED_MISSING
-from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial
+from src.modules.backend.common import CommonUtils
+from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party
 import itertools
 from operator import itemgetter
 
+from src.modules.dal.relations.Relations import *
 
 logger = app.logger
 
@@ -38,21 +39,25 @@ def getNewLaws(graph, user_id):
         raise Exception("ileagal operation")
 
 
-# TODO Ram check if curr_vote.elected_voted_for return GraphObject or only the primary key
 def getAllElectedVotedInLaw(graph, law):
     curr_vote = getLatestVote(law)
-    # total_votes = graph.cypher.execute(f"MATCH ")
-    # total_votes = ElectedOfficial.select(graph=graph).where(f"'{curr_vote.raw_title}' in _.voted_for")
-    # total_votes = list(curr_vote.elected_voted_for | curr_vote.elected_voted_against | curr_vote.elected_abstained)
-    return total_votes
+    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__})" \
+            f"WHERE v.raw_title={curr_vote.raw_title} AND " \
+            f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e)" \
+            f"RETURN e"
+    return CommonUtils.runQueryOnGraph(graph, query)
 
 
 def getAllElectedInPartyVotedInLaw(graph, law, party):
     curr_vote = getLatestVote(law)
-    return list(graph.run(f"MATCH (e:{ElectedOfficial.__class__.name"))
+    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__}) MATCH (p:{Party.__name__}" \
+            f"WHERE v.raw_title={curr_vote.raw_title} AND p.name={party.name} AND (e)-[:{MEMBER_OF_PARTY}]->(p) AND " \
+            f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e)" \
+            f"RETURN e"
+    return CommonUtils.runQueryOnGraph(graph, query)
 
 def getNumOfLawsByTag(graph, tag, num_of_laws):
-    filtered_laws = list(Law.select(graph=graph)) if tag is None else list(Law.select(graph=graph).where(f"'{tag}' in _.tagged_as")) ## TODO check if correct with db
+    filtered_laws = list(Law.select(graph=graph)) if tag is None else list(Law.select(graph=graph).where(f"'{tag}' _.tagged_as")) ## TODO check if correct with db
 
     # law = list(Law.select(graph=graph))
     # filtered_laws = laws if tag is None else list(filter(lambda law: tag in itertools.islice(sorted(law.tags_votes, key=itemgetter(1), reverse=True), 2), laws))

@@ -20,6 +20,8 @@ ELECTED_OFFICIAL="elected_official"
 START_DATE = "start_date"
 END_DATE = "end_date"
 
+
+
 class InvolvementLevel(Enum):
     LOW = 1
     MEDIUM = 2
