@@ -3,6 +3,7 @@ import logging
 from src.modules.backend.bl import LawService
 from src.modules.dal.graphObjects.graphObjects import *
 import itertools
+from src.modules.dal.GraphConnection import bolt_connect
 
 logger = logging.getLogger(__name__)
 
@@ -103,15 +104,25 @@ def absentFromVotesByParty(graph, tag, num_of_laws_backward):
     return parties_missing
 
 
-def createGeneralStats():
+def createGeneralStats(num_of_laws_backward):
+    graph = bolt_connect()
     with open("Tags.txt", "r") as tags_file:
         for tag_name in tags_file:
-            party_efficiency = f"PartyEfficiancy_{tag_name}"
-            currNode = GeneralInfo()
+            party_efficiency = f"PartiesEfficiancy_{tag_name}"
+            law_proposals = f"LawProposal_{tag_name}"
+            absent_stats = f"AbsentStats_{tag_name}"
 
+            if "All" in tag_name:
+                tag_name = None
 
+            raw_data_efficiency = jsonify(getAllPartiesEfficiencyByTag(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+            GeneralInfo.createGeneralInfo(graph=graph, type=party_efficiency, raw_data=raw_data_efficiency)
 
+            raw_data_proposals = jsonify(getAllLawProposalPerParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+            GeneralInfo.createGeneralInfo(graph=graph, type=law_proposals, raw_data=raw_data_proposals)
 
+            raw_data_absent = jsonify(absentFromVotesByParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+            GeneralInfo.createGeneralInfo(graph=graph, type=absent_stats, raw_data=raw_data_absent)
 
 
 
