@@ -8,34 +8,32 @@ logger = app.logger
 
 NUM_OF_PROPOSALS = "num_of_proposals"
 ELECTED_PROPOSALS = "elected_proposals"
+PARTY_EFFICIENCY = "Party Efficiency"
+MEMBER_EFFICIENCY = "Memeber Efficiency"
 
 
 def _getPartyEfficiancy(graph, party, laws):
     num_of_members = len(party.party_members)
     wanted_num_of_votes = len(laws) * num_of_members
     real_num_of_votes = 0
+    member_efficiency = {}
 
     logger.debug(f"Find efficiency for party: {party.name}")
 
     for law in laws:
-        real_num_of_votes += len(LawService.getAllElectedInPartyVotedInLaw(graph=graph, law=law, party=party))
+        electors_voted_for_law = LawService.getAllElectedInPartyVotedInLaw(graph=graph, law=law, party=party)
+        real_num_of_votes += len(electors_voted_for_law)
+        for elect in electors_voted_for_law:
+            if elect.name in member_efficiency:
+                member_efficiency[elect.name] = member_efficiency[elect.name] + 1
+            else:
+                member_efficiency[elect.name] = 1
 
-    logger.debug(f"for party:{party.name}, wanted is:{wanted_num_of_votes}, real is:{real_num_of_votes} -> Efficiency is:{real_num_of_votes / wanted_num_of_votes}")
+    party_efficiency = {PARTY_EFFICIENCY: real_num_of_votes / float(wanted_num_of_votes), MEMBER_EFFICIENCY: member_efficiency}
 
-    return real_num_of_votes / wanted_num_of_votes
+    logger.debug(f"for party:{party.name}, {str(party_efficiency)}")
 
-
-def _getMemberEfficiency(graph, member, laws):
-    wanted_num_of_votes = len(laws)
-
-    logger.debug(f"Find efficiency for: {member.name}")
-
-
-    real_num_of_votes = len(list(filter(lambda law: member in LawService.getAllElectedVotedInLaw(graph=graph, law=law), laws)))
-
-    logger.debug(f"for member:{member.name}, wanted is: {wanted_num_of_votes}, real is: {real_num_of_votes} -> Efficiency is:{real_num_of_votes / wanted_num_of_votes}")
-
-    return real_num_of_votes / wanted_num_of_votes
+    return party_efficiency
 
 
 def getAllPartiesEfficiencyByTag(graph, tag, num_of_laws_backward):
@@ -46,11 +44,7 @@ def getAllPartiesEfficiencyByTag(graph, tag, num_of_laws_backward):
     logger.debug(f"laws: {str(laws)}")
 
     for party in Party.select(graph=graph):
-        party_efficiancy = _getPartyEfficiancy(graph=graph, party=party, laws=laws)
-        members_efficiancy = dict()
-        for party_member in party.party_members:
-            members_efficiancy[party_member.name] = _getMemberEfficiency(graph=graph, member=party_member, laws=laws)
-        parties_efficiancy[party.name] = {"Party Efficiancy": party_efficiancy, "Members Efficiancy": members_efficiancy}
+        parties_efficiancy[party.name] = _getPartyEfficiancy(graph=graph, party=party, laws=laws)
 
     logger.debug(f"Parties Efficiancy: {str(parties_efficiancy)}")
 
@@ -69,7 +63,7 @@ def getAllLawProposalPerParty(graph, tag, num_of_laws_backward):
     for party, elected_officals in itertools.groupby(proposed_by, key=lambda elected: CommonUtils.getSingleItemInSet(elected.member_of_party).name):
         elected_list = list(elected_officals)
         num_of_proposals = len(elected_list)
-        elected_proposals = {name : len(list(group)) for name, group in itertools.groupby(elected_officals, key=lambda elected: elected.name)}
+        elected_proposals = {name : len(list(group)) for name, group in itertools.groupby(elected_list, key=lambda elected: elected.name)}
         all_proposals[party.name] = {NUM_OF_PROPOSALS:(num_of_proposals/float(total_num_of_laws)), ELECTED_PROPOSALS: elected_proposals}
 
     return all_proposals
