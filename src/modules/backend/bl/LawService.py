@@ -42,7 +42,7 @@ def getNewLaws(graph, user_id):
 
 
 def getAllElectedVotedInLaw(graph, law):
-    curr_vote = getLatestVote(law)
+    curr_vote = getLatestVoteForLaw(law)
     query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__})" \
             f"WHERE v.raw_title={curr_vote.raw_title} AND " \
             f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e)" \
@@ -50,8 +50,19 @@ def getAllElectedVotedInLaw(graph, law):
     return CommonUtils.runQueryOnGraph(graph, query)
 
 
+def getLatestVoteForLaw(graph, law):
+    query = f"MATCH (v:{Vote.__name__}) MATCH (l:{Law.__name__}) WHERE l.name='{law.name}' AND (v)-[:{LAW}]->(l) " \
+            f"RETURN v " \
+            f"ORDER BY v.timestamp " \
+            f"LIMIT 1"
+    logger.debug(f"Query is: {query}")
+    data = graph.run(query).data()[0]
+    logger.debug(f"data returned: {data['v']}")
+    return Vote.wrap(data['v'])
+
+
 def getAllElectedInPartyVotedInLaw(graph, law, party):
-    curr_vote = getLatestVote(law)
+    curr_vote = getLatestVoteForLaw(law)
     query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__}) MATCH (p:{Party.__name__}" \
             f"WHERE v.raw_title={curr_vote.raw_title} AND p.name={party.name} AND (e)-[:{MEMBER_OF_PARTY}]->(p) AND " \
             f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e)" \
