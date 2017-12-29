@@ -102,9 +102,10 @@ graph = bolt_connect()
 #a = graph.run("MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:ELECTED_VOTED_FOR]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name CONTAINS 'בריאות' return e, p.name")
 #o  = ElectedOfficial.select(graph,primary_value="דוד אזולאי")\
 #    .where("'{}' IN _.member_of_party".format('ש"ס'))
-query = "MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:{}]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name CONTAINS '{}' return e, p.name"
-voted_for = graph.run(query.format(ELECTED_VOTED_FOR,"מחלת ה-SMA")).data()
-print(voted_for)
+# query = "MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:{}]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name CONTAINS '{}' return e, p.name"
+# voted_for = graph.run(query.format(ELECTED_VOTED_FOR,"מחלת ה-SMA")).data()
+# for x in voted_for:
+#     s = ElectedOfficial.wrap(x["e"])
 #
 # a = Residency()
 # a.name="תל אביב"

@@ -18,9 +18,7 @@ def _getPartyEfficiancy(graph, party, laws):
     logger.debug(f"Find efficiency for party: {party.name}")
 
     for law in laws:
-        real_num_of_votes += len(getAllElectedInPartyVotedInLaw(graph=graph, law=law, party=party))
-        # total_votes = LawService.getAllElectedVotedInLaw(graph=graph, law=law)
-        # real_num_of_votes += len(list(filter(lambda elected_official: elected_official in party.party_members, total_votes)))
+        real_num_of_votes += len(LawService.getAllElectedInPartyVotedInLaw(graph=graph, law=law, party=party))
 
     logger.debug(f"for party:{party.name}, wanted is:{wanted_num_of_votes}, real is:{real_num_of_votes} -> Efficiency is:{real_num_of_votes / wanted_num_of_votes}")
 
@@ -32,7 +30,8 @@ def _getMemberEfficiency(graph, member, laws):
 
     logger.debug(f"Find efficiency for: {member.name}")
 
-    real_num_of_votes = len(list(filter(lambda law: member in LawService.getAllElectedVotedInLaw(law), laws)))
+
+    real_num_of_votes = len(list(filter(lambda law: member in LawService.getAllElectedVotedInLaw(graph=graph, law=law), laws)))
 
     logger.debug(f"for member:{member.name}, wanted is: {wanted_num_of_votes}, real is: {real_num_of_votes} -> Efficiency is:{real_num_of_votes / wanted_num_of_votes}")
 
@@ -62,8 +61,7 @@ def getAllLawProposalPerParty(graph, tag, num_of_laws_backward):
     laws = LawService.getNumOfLawsByTag(graph=graph, tag=tag, num_of_laws=num_of_laws_backward)
     proposed_by = [CommonUtils.getSingleItemInSet(law.proposed_by) for law in laws] # list of ElectedOfficial
 
-    logger.debug(
-        f"Proposals for laws are:{str(proposed_by)}. check for sanity:{CommonUtils.getSingleItemInSet(proposed_by[0].member_of_party).name}")
+    logger.debug(f"Proposals for laws are:{str(proposed_by)}. check for sanity:{CommonUtils.getSingleItemInSet(proposed_by[0].member_of_party).name}")
 
     total_num_of_laws = len(laws)
     all_proposals = dict()
