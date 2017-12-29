@@ -1,7 +1,11 @@
 from datetime import datetime
 
+import logging
+
 from src.modules.dal.graphObjects.graphObjects import *
 import datetime
+
+logger = logging.getLogger(__name__)
 
 def isUserExist(graph, user_token):
     return graph.evaluate("MATCH (n:User) WHERE n.token = \"{x}\" RETURN n LIMIT 1", x=user_token) is not None
