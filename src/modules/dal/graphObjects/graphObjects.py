@@ -1,3 +1,4 @@
+import time
 from flask import jsonify
 from py2neo.ogm import *
 
@@ -218,7 +219,7 @@ class Vote(GraphObject):
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_against.add(member)
-
+            vote.timestamp=int(time.time())
         return vote
 
     @staticmethod
@@ -404,4 +405,29 @@ class User(GraphObject):
         return self.__ogm__.node.__str__()
 
 
+class GeneralInfo(GraphObject):
+    __primarykey__ = "type"
+    type=Property(key="type")
+    raw_data=Property()
+    timestamp=Property(key="timestamp")
 
+    @staticmethod
+    def safeSelect(graph, type):
+        try:
+            general_info = GeneralInfo.select(graph=graph, primary_value=type).first()
+        except:
+            raise Exception("No user statistics with token:{}".format(type))
+
+        return general_info
+
+
+    @classmethod
+    def createGeneralInfo(cls, graph, type, raw_data):
+        general_info = cls()
+        general_info.type = type
+        general_info.raw_data = raw_data
+        general_info.timestamp=int(time.time())
+        trans = graph.begin()
+        graph.push(general_info)
+        trans.commit()
+        return general_info
