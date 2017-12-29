@@ -1,8 +1,8 @@
 from flask import jsonify
 from py2neo.ogm import *
 
-from backend.common.APIConstants import Rank, InvolvementLevel
-from dal.relations.Relations import *
+from src.modules.backend.common.APIConstants import Rank, InvolvementLevel
+from src.modules.dal.relations.Relations import *
 
 
 def selfUpdateGraph(graph, obj):
