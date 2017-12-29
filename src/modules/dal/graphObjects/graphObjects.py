@@ -1,8 +1,8 @@
 from flask import jsonify
 from py2neo.ogm import *
 
-from src.modules.backend.common.APIConstants import BLANK_TAG, Rank, InvolvementLevel
-from src.modules.dal.relations.Relations import *
+from backend.common.APIConstants import Rank, InvolvementLevel
+from dal.relations.Relations import *
 
 
 def selfUpdateGraph(graph, obj):
@@ -177,6 +177,7 @@ class Vote(GraphObject):
     raw_title=Property()
     type=Property()
     date=Property()
+    timestamp=Property()
     url = Property()
     vote_num = Property()
     meeting_num = Property()
