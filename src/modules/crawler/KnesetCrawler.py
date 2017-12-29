@@ -11,7 +11,7 @@ from Logger import getLogger
 from constants import URLS, VOTE_TYPE_IMAGE_LABELS, MAIL_CONSTANTS
 from dbconnector import *
 from utils import UTILS
-
+import logging
 logger = getLogger('crawler')
 
 graph = bolt_connect()  # type: Graph
@@ -91,7 +91,11 @@ def get_party_to_member_dict() -> dict:
     elem_members = html_tree.xpath('//table[@id="dlMkMembers"]//td[.//@class="PhotoAsistno" or .//@class="PhotoAsist"]')
     logger.info("found {} voting elected officials ".format(len(elem_members)))
     for elem_member in elem_members:
-        image_url = "{}{}".format(URLS.BASE_URL, elem_member.xpath('./img/@src')[0])
+        image_src=elem_member.xpath('./img/@src')[0] # type: str
+        if image_src.startswith("http"):
+            image_url=image_src
+        else:
+            image_url = "{}{}".format(URLS.BASE_URL,image_src)
         name = elem_member.xpath('./a/text()')[0]
         mk_id = elem_member.xpath('./a/@href')[0].split('=')[1]
         member_page_url = "{}{}".format(URLS.MEMBER_PAGE_BASE_URL, mk_id)
@@ -164,6 +168,8 @@ def get_votes(date_from="1/1/2003", date_to=None, retries=45):
         if first_loop:
             logger.info("found {} votes".format(total_results))
             first_loop=False
+        if total_results==0:
+            return result_votes
         next_cnt = int(result_meta_data_str.split()[-1].strip())
         logger.info("fetching results {}-{}".format(next_cnt-20,next_cnt))
         elem_votes = html_tree.xpath('//tr[./td/a[@class="DataText6"]]')
@@ -171,7 +177,7 @@ def get_votes(date_from="1/1/2003", date_to=None, retries=45):
             vote_dict = {
                 "raw_title": elem_vote.xpath('.//a/text()')[0],
                 "type": elem_vote.xpath('.//a/text()')[0].split("-")[0].strip(),
-                "url": elem_vote.xpath('.//a/@href')[0],
+                "url": "{}/{}".format(URLS.VOTES_BASE_URL,elem_vote.xpath('.//a/@href')[0]),
                 "date": elem_vote.xpath('./td[4]/text()')[0].strip(),
                 "vote_num": elem_vote.xpath('./td[3]/text()')[0].strip(),
                 "meeting_num": elem_vote.xpath('./td[2]/text()')[0].strip(),
@@ -230,10 +236,10 @@ def add_votes_to_db(date_from='1/8/2003'):
                     for initiator in initiators:
                         initiator_member = ElectedOfficial.select(graph, normalize(initiator)).first()
                         if initiator_member is None:
-                            logger.error("fail to retreive initiator elected official {} from db by serching for".format(initiator,normalize(initiator)))
+                            logger.error("fail to retreive initiator elected official {} from db by serching for {}".format(initiator,normalize(initiator)))
                         else:
                             law_obj.proposed_by.add(initiator_member)
-                voting_details = get_vote_detail_dict("{}/{}".format(URLS.VOTES_BASE_URL, vote['url']))
+                voting_details = get_vote_detail_dict(vote['url'])
                 vote_obj = Vote.createVoteFromJson(vote, law_obj, voting_details, graph)
                 summary_list.append("new vote added :{}".format(vote['raw_title']))
                 graph.push(law_obj)

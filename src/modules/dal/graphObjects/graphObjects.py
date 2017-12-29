@@ -282,7 +282,7 @@ class Residency(GraphObject):
 class User(GraphObject):
     __primarykey__ = "token"
 
-    token = Property()
+    token = Property(key="token")
     birth_year = Property(key="birthYear")
     involvement_level = Property(key="involvmentLevel")
     rank = Property(key="rank")

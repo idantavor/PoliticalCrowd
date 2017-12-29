@@ -1,6 +1,9 @@
+import logging
+
 from modules.backend.common.APIConstants import InvolvementLevel
 from modules.dal.graphObjects.graphObjects import User
 
+logger = logging.getLogger(__name__)
 
 def updateExistingField(graph, update_function, new_value):
     if new_value is not None:

@@ -1,10 +1,10 @@
+import logging
+
 from src.modules.backend.bl import LawService
-from src.modules.backend.common import CommonUtils
 from src.modules.dal.graphObjects.graphObjects import *
-from src.modules.backend.app.WebAPI import app
 import itertools
 
-logger = app.logger
+logger = logging.getLogger(__name__)
 
 NUM_OF_PROPOSALS = "num_of_proposals"
 ELECTED_PROPOSALS = "elected_proposals"
@@ -54,7 +54,7 @@ def getAllPartiesEfficiencyByTag(graph, tag, num_of_laws_backward):
 
 def getAllLawProposalPerParty(graph, tag, num_of_laws_backward):
     laws = LawService.getNumOfLawsByTag(graph=graph, tag=tag, num_of_laws=num_of_laws_backward)
-    proposed_by = [CommonUtils.getSingleItemInSet(law.proposed_by) for law in laws] # list of ElectedOfficial
+    proposed_by = [law.proposed_by[0] for law in laws] # list of ElectedOfficial
 
     logger.debug(f"Proposals for laws are:{str(proposed_by)}. check for sanity:{CommonUtils.getSingleItemInSet(proposed_by[0].member_of_party).name}")
 

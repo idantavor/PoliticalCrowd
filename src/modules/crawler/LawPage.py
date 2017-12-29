@@ -13,6 +13,7 @@ from constants import LAW_PAGE_CONSTANTS
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 #get the logger
 import Logger
+import logging
 logger=Logger.getLogger('crawler')
 
 def extract_description_from_file(file_full_path) :
