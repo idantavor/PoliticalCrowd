@@ -1,6 +1,7 @@
 import argparse
 import time
 import dateparser
+import traceback
 import requests
 from dateutil import relativedelta
 from lxml import html
@@ -56,6 +57,11 @@ def get_party_and_role_from_role_title(role_title):
     role = None if role_suffix == "" else role_suffix
     return party, role
 
+def normalize(string):
+    if string is None:
+        return None
+    else:
+        return " ".join(string.strip().split())
 
 def get_member_dict(member_page_url, image_link, member_name):
     logger.info("getting url for member {}".format(member_name))
@@ -113,6 +119,8 @@ def add_parties_and_members_to_db():
         m = ElectedOfficial.createElectedOfficialFromJson(member_dict, p)
         graph.push(m)
 
+def dstring_to_timestamp(date):
+    return dateparser.parse(date).timestamp()
 
 def get_votes(date_from="1/1/2003", date_to=None, retries=45):
     result_votes = []
@@ -166,7 +174,8 @@ def get_votes(date_from="1/1/2003", date_to=None, retries=45):
                 "url": elem_vote.xpath('.//a/@href')[0],
                 "date": elem_vote.xpath('./td[4]/text()')[0].strip(),
                 "vote_num": elem_vote.xpath('./td[3]/text()')[0].strip(),
-                "meeting_num": elem_vote.xpath('./td[2]/text()')[0].strip()
+                "meeting_num": elem_vote.xpath('./td[2]/text()')[0].strip(),
+                "timestamp": dstring_to_timestamp(elem_vote.xpath('./td[4]/text()')[0].strip())
             }
             result_votes += [vote_dict]
         if next_cnt < total_results:
@@ -214,13 +223,16 @@ def add_votes_to_db(date_from='1/8/2003'):
                     description = law_dict['description']
                     initiators = law_dict['initiators']  # type: list
                     if law_obj is None:
-                        law_obj = Law.createLaw(law_name, None, None, description, url)  # type: Law
+                        law_obj = Law.createLaw(law_name, time.time(), None, description, url)  # type: Law
                         summary_list.append("new law added :{}".format(law_name))
                     else:
                         law_obj.description = description
                     for initiator in initiators:
-                        initiator_member = ElectedOfficial.select(graph, initiator).first()
-                        law_obj.proposed_by.add(initiator_member)
+                        initiator_member = ElectedOfficial.select(graph, normalize(initiator)).first()
+                        if initiator_member is None:
+                            logger.error("fail to retreive initiator elected official {} from db by serching for".format(initiator,normalize(initiator)))
+                        else:
+                            law_obj.proposed_by.add(initiator_member)
                 voting_details = get_vote_detail_dict("{}/{}".format(URLS.VOTES_BASE_URL, vote['url']))
                 vote_obj = Vote.createVoteFromJson(vote, law_obj, voting_details, graph)
                 summary_list.append("new vote added :{}".format(vote['raw_title']))
@@ -256,9 +268,10 @@ def parse_args(args):
     parser.add_argument('--db_addr', dest="db_ip", default=None, help="database ip address")
     parser.add_argument('--interval', dest="interval", default=10, help="scraping interval in minutes", type=int)
     parser.add_argument('--mail', action='store_true', dest="mail", default=False, help="send mail debugs")
+    parser.add_argument('--members', action='store_true', dest="members", default=False, help="crawl for members and parties")
     parser.add_argument('--local', action='store_true', dest="is_local", default=False,
                         help="is db resides on local machine")
-    # parser.add_argument('--delete_db',action='store_true',help="delete all db content",default=False,dest="delete_db")
+    parser.add_argument('--delete_db',action='store_true',help="delete all db content",default=False,dest="delete_db")
     parsed_args = parser.parse_args(args)
     parsed_args.from_date = dateparser.parse(parsed_args.from_date)
     if parsed_args.is_local:
@@ -272,6 +285,12 @@ def parse_args(args):
 
 def main(args):
     pargs = parse_args(args[1:])
+    if pargs.delete_db:
+        delete_db()
+        exit(0)
+    if pargs.members:
+        add_parties_and_members_to_db()
+        exit(0)
     try:
         first_time = True
         now = datetime.datetime.now()
@@ -292,6 +311,5 @@ def main(args):
             time.sleep(60*pargs.interval)
     except Exception as e:
         UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_ERROR,MAIL_CONSTANTS.MESSAGES.get_error_message(e))
-        logger.error('Crawler encountered an error :\n{}'.format(e))
-
+        logger.error('Crawler encountered an error :\n{}\nSTACK TRACE:\n{}'.format(e,traceback.print_stack()))
 

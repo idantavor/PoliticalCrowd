@@ -1,12 +1,15 @@
 from flask import json
+from py2neo import Graph
 
+from src.modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
 from src.modules.backend.app.WebAPI import app
 from src.modules.backend.bl.UserService import isUserExist
-from src.modules.backend.common.APIConstants import VOTED_FOR, VOTED_AGAINST, VOTED_ABSTAINED, VOTED_MISSING
-from src.modules.dal.graphObjects.graphObjects import User, Law
+from src.modules.backend.common import CommonUtils
+from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party, Tag
 import itertools
 from operator import itemgetter
 
+from src.modules.dal.relations.Relations import *
 
 logger = app.logger
 
@@ -37,18 +40,75 @@ def getNewLaws(graph, user_id):
         raise Exception("ileagal operation")
 
 
-def getAllElectedVotedForLaw(law):
-    curr_vote = getLatestVote(law)
-    total_votes = list(curr_vote.elected_voted_for | curr_vote.elected_voted_against | curr_vote.elected_abstained)
-    return total_votes
+def getAllElectedVotedInLaw(graph, law):
+    curr_vote = getLatestVoteForLaw(graph=graph, law=law)
+    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__}) " \
+            f"WHERE v.raw_title='{curr_vote.raw_title}' AND " \
+            f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e))" \
+            f"RETURN e"
+    data = graph.run(query).data()
+    electors = []
+    for e in data:
+        electors.append(ElectedOfficial.wrap(e['e']))
+
+    return electors
+
+
+def getLatestVoteForLaw(graph, law):
+    query = f"MATCH (v:{Vote.__name__}) MATCH (l:{Law.__name__}) WHERE l.name='{law.name}' AND (v)-[:{LAW}]->(l) " \
+            f"RETURN v " \
+            f"ORDER BY v.timestamp " \
+            f"LIMIT 1"
+    logger.debug(f"Query is: {query}")
+    data = graph.run(query).data()[0]
+    logger.debug(f"data returned: {data['v']}")
+    return Vote.wrap(data['v'])
+
+
+def getAllElectedInPartyVotedInLaw(graph, law, party):
+    curr_vote = getLatestVoteForLaw(graph=graph, law=law)
+    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__}) MATCH (p:{Party.__name__} " \
+            f"WHERE v.raw_title='{curr_vote.raw_title}' AND p.name='{party.name}' AND (e)-[:{MEMBER_OF_PARTY}]->(p) AND " \
+            f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e)) " \
+            f"RETURN e"
+    data = graph.run(query).data()
+    electors = []
+    for e in data:
+        electors.append(ElectedOfficial.wrap(e['e']))
+
+    return electors
+
+
+def getAllElectedInPartyMissingFromLaw(graph, law, party):
+    curr_vote = getLatestVoteForLaw(graph=graph, law=law)
+    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (p:{Party.__name__}) MATCH (v:{Vote.__name__}) " \
+            f"WHERE v.raw_title='{curr_vote.raw_title}' " \
+            f"AND p.name='{party.name}' " \
+            f"AND (e)-[:{MEMBER_OF_PARTY}]->(p) " \
+            f"AND (v)-[:{ELECTED_MISSING}]->(e) " \
+            f"RETURN e"
+    data = graph.run(query).data()
+    electors = []
+    for e in data:
+        electors.append(ElectedOfficial.wrap(e['e']))
+
+    return electors
 
 
 def getNumOfLawsByTag(graph, tag, num_of_laws):
-    laws = list(Law.select(graph=graph))
-    filtered_laws = laws if tag is None else list(filter(lambda law: tag in itertools.islice(sorted(law.tags_votes, key=itemgetter(1), reverse=True), 2), laws))
-    sorted_laws = filtered_laws.sort(key=lambda obj: obj.timestamp, reverse=True)
-    top_laws = itertools.islice(sorted_laws, num_of_laws)
-    return top_laws
+    tag_query = "" if tag is None else f"MATCH (t:{Tag.__name__}) WHERE t.name='{tag.name}' AND (l)-[:{TAGGED_AS}]->(t)"
+    query = f"MATCH (l:{Law.__name__}) {tag_query} " \
+                     f"RETURN l " \
+                     f"ORDER BY l.timestamp " \
+                     f"LIMIT {num_of_laws}"
+
+    logger.debug(f"query is: {query}")
+    data = graph.run(query).data()
+    laws = []
+    for law in data:
+        laws.append(Law.wrap(law['l']))
+
+    return laws
 
 
 def getLawsByDateInterval(graph, start_date, end_date):
@@ -60,37 +120,65 @@ def getLawsByDateInterval(graph, start_date, end_date):
     return res
 
 
-def getLatestVote(law):
-    return sorted(list(law.elected_officials_votes), key=lambda v : v.date, reverse=True)[0]
-
-def insertVotesByType(ret, vote_type, key_name):
-    for elected in list(vote_type):
-        party = list(elected.member_of_party)[0]
-        if ret[party.name] is None:
-            ret[party.name] = {key_name : 1}
-        elif ret[party.name][key_name] is None:
-            ret[party.name][key_name] = 1
+def countPartyVotes(data):
+    res = {}
+    for selection in data:
+        if res[selection["p.name"]] is None:
+            res[selection["p.name"]]= {"count" : 1,
+                                       "elected_officials" : [selection["e"].properties]}
         else:
-            ret[party.name][key_name] = ret[party.name][key_name] + 1
+            res[selection["p.name"]] = {"count" : res[selection["p.name"]]["count"] +1,
+                                        "elected_officials": res[selection["p.name"]]["elected_officials"].append(selection["e"].properties)}
+    return res
+
+def calculateStats(voted_for, voted_against, missing, abstained):
+    res = {}
+    for party, votes in voted_for.items():
+        res[party] = {"for" : votes}
+
+    for party, votes in voted_against.items():
+        res[party]["against"] = votes
+
+    for party, votes in missing.items():
+        res[party]["missing"] = votes
+
+    for party, votes in abstained.items():
+        res[party]["abstained"] = votes
+
+    return res
+
+def createStatsResponse(user_party, user_vote, votes):
+    res = {}
+    for party_name, party_vote in votes.items():
+        total_votes = sum(x["count"] for x in party_vote.values())
+        voted_like_user = party_vote[user_vote]["count"]
+        res[party_name] = {"match": (voted_like_user / total_votes),
+                           "is_users_party": True if user_party == party_name else False,
+                           "elected_voted_for": party_vote["elected_officials"]}
+    return res
+
 
 def getLawStats(graph, law_name, user_vote, user_id):
-    law = Law.safeSelect(graph= graph, name= law_name)
-    votes = {}
-    vote = getLatestVote(law)
-    insertVotesByType(ret=votes, vote_type=vote.elected_voted_for, key_name=VOTED_FOR)
-    insertVotesByType(ret=votes, vote_type=vote.elected_voted_against, key_name=VOTED_AGAINST)
-    insertVotesByType(ret=votes, vote_type=vote.elected_missing, key_name=VOTED_ABSTAINED)
-    insertVotesByType(ret=votes, vote_type=vote.elected_abstained, key_name=VOTED_MISSING)
+
+    query = "MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:{}]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name = '{}' return e, p.name"
+    voted_for = graph.run(query.format(ELECTED_VOTED_FOR,law_name)).data()
+    voted_against = graph.run(query.format(ELECTED_VOTED_AGAINST, law_name)).data()
+    missing = graph.run(query.format(ELECTED_MISSING, law_name)).data()
+    abstained = graph.run(query.format(ELECTED_ABSTAINED, law_name)).data()
+
+    voted_for = countPartyVotes(voted_for)
+    voted_against = countPartyVotes(voted_against)
+    missing = countPartyVotes(missing)
+    abstained = countPartyVotes(abstained)
+
+    votes = calculateStats(voted_for, voted_against, missing, abstained)
 
     user = User.safeSelect(graph = graph, token=user_id)
     user_party = list(user.associate_party)[0].name
 
-    res = {}
-    for party in votes:
-        total_votes = sum(x for x in party.values())
-        voted_like_user = party[user_vote]
-        res[party.name] = {"match": (voted_like_user / total_votes),
-                           "is_users_party" : True if user_party == party.name else False}
+    res = createStatsResponse(user_party, user_vote, votes)
 
     return res
+
+
 

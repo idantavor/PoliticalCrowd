@@ -1,7 +1,7 @@
 from flask import jsonify
 from py2neo.ogm import *
 
-from src.modules.backend.common.APIConstants import BLANK_TAG, Rank, InvolvementLevel
+from src.modules.backend.common.APIConstants import Rank, InvolvementLevel
 from src.modules.dal.relations.Relations import *
 
 
@@ -70,6 +70,9 @@ class ElectedOfficial(GraphObject):
         ret.name = name
         ret.active = active
         ret.title = title
+
+        ret.select()
+
         return ret
 
     @classmethod
@@ -153,11 +156,14 @@ class Law(GraphObject):
 
     def tagLawByName(self, graph, tag_name):
         tagNode = Tag.safeSelect(graph=graph, tag_name=tag_name)
-        if tag_name in self.tags_votes:
-            self.tags_votes[tag_name] += 1
+        tags_as_dict = dict(self.tags_votes)
+        if tag_name in tags_as_dict:
+            tags_as_dict[tag_name] += 1
         else:
             self.tagged_as.add(tagNode)
-            self.tags_votes[tag_name] = 1
+            tags_as_dict[tag_name] = 1
+
+        self.tags_votes = list(tags_as_dict.items())
 
         graph.begin(autocommit=True)
         graph.push(self)
@@ -171,6 +177,7 @@ class Vote(GraphObject):
     raw_title=Property()
     type=Property()
     date=Property()
+    timestamp=Property()
     url = Property()
     vote_num = Property()
     meeting_num = Property()
@@ -182,7 +189,7 @@ class Vote(GraphObject):
     elected_missing = RelatedTo(ElectedOfficial)
 
     @classmethod
-    def                                           createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
+    def createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
         vote = cls()
         for attr in [attrib for attrib in dir(vote) if "__" not in attrib]:
             if attr in vote_json:

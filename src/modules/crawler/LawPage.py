@@ -212,7 +212,7 @@ def get_law_page_url_from_json(vote_json) :
                 loss_matched_a_list.append(a)
         if len(matched_a_list) == 0:
             logger.warning("for law {} looking according string comparing yield no results".format(vote_json["raw_title"]))
-            if not len(loss_matched_a_list) == 0:
+            if len(loss_matched_a_list)>0 :
                 logger.warning("for law {} taking the newest result of the losser comparison".format(vote_json["raw_title"]))
                 law_page_url =  loss_matched_a_list[0].attrib['href']
         elif len(matched_a_list)== 1 :
