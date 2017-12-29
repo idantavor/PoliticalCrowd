@@ -32,6 +32,8 @@ def get_law_description_from_file(html_tree) :
     law_suggestions_documnets = html_tree.xpath("//td[contains(@class, 'LawDocHistoryLeftTd')]//a")
     for suggestion in law_suggestions_documnets:
         download_link = suggestion.attrib['href']
+        if not "docx" in download_link :
+            continue
         # Download the file from `url` and save it locally under `tmp_file_path`:
         tmp_file_path = os.path.join(os.getcwd(), os.path.basename(download_link))
         try:
@@ -45,7 +47,10 @@ def get_law_description_from_file(html_tree) :
             continue
         description = extract_description_from_file(tmp_file_path);
         if (os.path.isfile(tmp_file_path)):
-            os.remove(tmp_file_path)
+            try :
+                os.remove(tmp_file_path)
+            except Exception as e :
+                logger.error(str(e))
         if len(description) > 1:
             return description
     return description
@@ -106,7 +111,6 @@ def fill_data_from_law_page_url(url,out_dict):
     except Exception as e:
         logger.error("failed getting initiators from law page url {} ".format(str(e)))
 
-
     return
 
 
@@ -156,6 +160,13 @@ def are_date_equal(json_date,html_date) :
             j.month == h.month and
             j.year == h.year)
 
+def find_min_index_of_weird_num(possible_name):
+    starters = ["(נ/","(פ/","(מ/","(כ/"]
+    index = len(possible_name);
+    for s in starters :
+        if possible_name.find(s) > -1 :
+            index = min(index,possible_name.find(s))
+    return index;
 
 def get_law_page_url_from_json(vote_json) :
     #build the search term
@@ -190,10 +201,10 @@ def get_law_page_url_from_json(vote_json) :
         search_term = remove_all_non_hebrew_chars(search_term)
         a_query_result = html_tree.xpath("//div[contains(@id, 'divLawBillsResults')]//tr[contains(@class,'rgRow')]//a")
         matched_a_list = []
-        loss_matched_a_list = []
+        loss_matched_a_list = [] # type: list
         for a in a_query_result:
             possible_name = clean_string(a.xpath(".//text()")[0]).replace("'\\","")
-            possible_name = possible_name[:possible_name.rfind('מ')]
+            possible_name = possible_name[:find_min_index_of_weird_num(possible_name)]
             possible_name = remove_all_non_hebrew_chars(possible_name)
             if possible_name == search_term :
                 matched_a_list.append(a)
@@ -270,8 +281,24 @@ def test() :
 # fill_data_from_law_page_url(url,d)
 # x=1
 
+#x= 'חוק גיל פרישה (הורה שילדו נפטר) (הוראת שעה), התשע"ח-2017 (פ/2203/20) (כ/654)'
 # d={}
-# d["raw_title"] = 'להעביר את הצעת החוק לוועדה - הצעת חוק שעות עבודה ומנוחה (תיקון מס` 16),התשע"ח-2017'
+# d["raw_title"] = 'אישור החוק - הצעת חוק גיל פרישה (הורה שילדו נפטר) (הוראת שעה), התשע"ח-2017'
 # d["date"] = "12/12/2017 14:39"
 # law_dict = build_law_dict(d)
-# x=1
+# t=1
+# #
+
+#
+
+# outer = re.compile("(/(פ/))")
+# m = outer.search(x)
+# t = m.group(0)
+#
+# y = x.replace("(","z")
+# print(y)
+# print (re.findall("(?z)",y))
+# #
+# print (x[:min(x.find("(נ/"),x.find("(פ/"),x.find("(מ/"))]
+# m=re.match("(\.\\))",x)
+# print(m)
