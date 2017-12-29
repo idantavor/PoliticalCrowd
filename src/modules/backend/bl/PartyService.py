@@ -10,6 +10,8 @@ NUM_OF_PROPOSALS = "num_of_proposals"
 ELECTED_PROPOSALS = "elected_proposals"
 PARTY_EFFICIENCY = "Party Efficiency"
 MEMBER_EFFICIENCY = "Memeber Efficiency"
+PARTY_MISSING = "Party Missing"
+MEMBER_MISSING = "Member Missing"
 
 
 def _getPartyEfficiancy(graph, party, laws):
@@ -41,7 +43,6 @@ def getAllPartiesEfficiencyByTag(graph, tag, num_of_laws_backward):
 
     parties_efficiancy = dict()
     laws = LawService.getNumOfLawsByTag(graph=graph, tag=tag, num_of_laws=num_of_laws_backward)
-    logger.debug(f"laws: {str(laws)}")
 
     for party in Party.select(graph=graph):
         parties_efficiancy[party.name] = _getPartyEfficiancy(graph=graph, party=party, laws=laws)
@@ -67,6 +68,39 @@ def getAllLawProposalPerParty(graph, tag, num_of_laws_backward):
         all_proposals[party.name] = {NUM_OF_PROPOSALS:(num_of_proposals/float(total_num_of_laws)), ELECTED_PROPOSALS: elected_proposals}
 
     return all_proposals
+
+
+def _getPartyMissingFromLaws(graph, party, laws):
+    member_missing = {}
+    total = len(party.party_members) * len(laws)
+    total_missing = 0
+    for law in laws:
+        electors_missing = LawService.getAllElectedInPartyMissingFromLaw(graph=graph, party=party, law=law)
+        total_missing += len(electors_missing)
+        for elector in electors_missing:
+            if elector.name in member_missing:
+                member_missing[elector.name] = member_missing[elector.name] + 1
+            else:
+                member_missing[elector.name] = 1
+
+    party_missing = {PARTY_MISSING: total_missing/float(total), MEMBER_MISSING: member_missing}
+
+    return party_missing
+
+
+def absentFromVotesByParty(graph, tag, num_of_laws_backward):
+    laws = LawService.getNumOfLawsByTag(graph=graph, tag=tag, num_of_laws=num_of_laws_backward)
+    parties_missing = dict()
+
+    for party in Party.select(graph=graph):
+        parties_missing[party.name] = _getPartyMissingFromLaws(graph=graph, party=party, laws=laws)
+
+    logger.debug(f"Parties absent: {str(parties_missing)}")
+
+    return parties_missing
+
+
+
 
 
 

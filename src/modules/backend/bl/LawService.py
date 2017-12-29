@@ -1,8 +1,7 @@
 from flask import json
 from py2neo import Graph
 
-from modules.backend.common.CommonUtils import runQueryOnGraph
-from modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
+from src.modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
 from src.modules.backend.app.WebAPI import app
 from src.modules.backend.bl.UserService import isUserExist
 from src.modules.backend.common import CommonUtils
@@ -42,7 +41,7 @@ def getNewLaws(graph, user_id):
 
 
 def getAllElectedVotedInLaw(graph, law):
-    curr_vote = getLatestVoteForLaw(law)
+    curr_vote = getLatestVoteForLaw(graph=graph, law=law)
     query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__}) " \
             f"WHERE v.raw_title='{curr_vote.raw_title}' AND " \
             f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e))" \
@@ -67,10 +66,26 @@ def getLatestVoteForLaw(graph, law):
 
 
 def getAllElectedInPartyVotedInLaw(graph, law, party):
-    curr_vote = getLatestVoteForLaw(law)
+    curr_vote = getLatestVoteForLaw(graph=graph, law=law)
     query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__}) MATCH (p:{Party.__name__} " \
             f"WHERE v.raw_title='{curr_vote.raw_title}' AND p.name='{party.name}' AND (e)-[:{MEMBER_OF_PARTY}]->(p) AND " \
             f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e)) " \
+            f"RETURN e"
+    data = graph.run(query).data()
+    electors = []
+    for e in data:
+        electors.append(ElectedOfficial.wrap(e['e']))
+
+    return electors
+
+
+def getAllElectedInPartyMissingFromLaw(graph, law, party):
+    curr_vote = getLatestVoteForLaw(graph=graph, law=law)
+    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (p:{Party.__name__}) MATCH (v:{Vote.__name__}) " \
+            f"WHERE v.raw_title='{curr_vote.raw_title}' " \
+            f"AND p.name='{party.name}' " \
+            f"AND (e)-[:{MEMBER_OF_PARTY}]->(p) " \
+            f"AND (v)-[:{ELECTED_MISSING}]->(e) " \
             f"RETURN e"
     data = graph.run(query).data()
     electors = []
