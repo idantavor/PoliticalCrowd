@@ -18,10 +18,10 @@ def submitVoteAndTags(graph, law_name, tags, user_id, vote):
     user = User.safeSelect(graph=graph, token=user_id)
     if vote is None:
         raise Exception("empty vote")
-    if vote is VOTED_FOR:
+    if vote == VOTED_FOR:
         user.voteLaw(graph=graph, law_name=law_name, is_upvote=True)
         logger.debug("[" + str(user_id) + "] voted for " + law_name)
-    elif vote is VOTED_AGAINST:
+    elif vote == VOTED_AGAINST:
         user.voteLaw(graph=graph, law_name=law_name, is_upvote=False)
         logger.debug("[" + str(user_id) + "] voted against " + law_name)
     else:
@@ -96,7 +96,8 @@ def getAllElectedInPartyMissingFromLaw(graph, law, party):
 
 
 def getNumOfLawsByTag(graph, tag, num_of_laws):
-    tag_query = "" if tag is None else f"MATCH (t:{Tag.__name__}) WHERE t.name='{tag.name}' AND (l)-[:{TAGGED_AS}]->(t)"
+    tag_query = "" if tag is None else f"MATCH (t:{Tag.__name__} "+"{name="+tag.name+"})"\
+                                       +f" WHERE (l)-[:{TAGGED_AS}]->(t)"
     query = f"MATCH (l:{Law.__name__}) {tag_query} " \
                      f"RETURN l " \
                      f"ORDER BY l.timestamp " \
@@ -125,27 +126,29 @@ def getLawsByDateInterval(graph, start_date, end_date):
 def countPartyVotes(data):
     res = {}
     for selection in data:
-        if res[selection["p.name"]] is None:
+        if res.get(selection["p.name"]) is None:
             res[selection["p.name"]]= {"count" : 1,
                                        "elected_officials" : [selection["e"].properties]}
         else:
-            res[selection["p.name"]] = {"count" : res[selection["p.name"]]["count"] +1,
-                                        "elected_officials": res[selection["p.name"]]["elected_officials"].append(selection["e"].properties)}
+            res[selection["p.name"]]["count"] += 1
+            res[selection["p.name"]]["elected_officials"].append(selection["e"].properties)
     return res
 
 def calculateStats(voted_for, voted_against, missing, abstained):
     res = {}
+
     for party, votes in voted_for.items():
-        res[party] = {"for" : votes}
+        res[party] = {VOTED_FOR : votes}
+
 
     for party, votes in voted_against.items():
-        res[party]["against"] = votes
+        res[party][VOTED_AGAINST] = votes
 
     for party, votes in missing.items():
-        res[party]["missing"] = votes
+        res[party][ELECTED_MISSING] = votes
 
     for party, votes in abstained.items():
-        res[party]["abstained"] = votes
+        res[party][ELECTED_ABSTAINED] = votes
 
     return res
 
@@ -153,10 +156,14 @@ def createStatsResponse(user_party, user_vote, votes):
     res = {}
     for party_name, party_vote in votes.items():
         total_votes = sum(x["count"] for x in party_vote.values())
-        voted_like_user = party_vote[user_vote]["count"]
+        voted_like_user = party_vote.get(user_vote)["count"] if party_vote.get(user_vote) is not None else 0
         res[party_name] = {"match": (voted_like_user / total_votes),
                            "is_users_party": True if user_party == party_name else False,
-                           "elected_voted_for": party_vote["elected_officials"]}
+                           "elected_voted": {"for" : party_vote[VOTED_FOR] if party_vote.get(VOTED_FOR) is not None else {},
+                                             "against": party_vote[VOTED_AGAINST] if party_vote.get(VOTED_AGAINST) is not None else {},
+                                             "abstained": party_vote[ELECTED_ABSTAINED] if party_vote.get(ELECTED_ABSTAINED) is not None else {},
+                                             "missing": party_vote[ELECTED_MISSING] if party_vote.get(ELECTED_ABSTAINED) is not None else {}}
+                           }
     return res
 
 

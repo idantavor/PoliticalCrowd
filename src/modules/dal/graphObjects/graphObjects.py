@@ -119,7 +119,7 @@ class Tag(GraphObject):
 
 class Law(GraphObject):
     __primarykey__ = "name"
-    name = Property()
+    name = Property(key="name")
     timestamp = Property(key="timestamp")
     status = Property(key="status")
     description = Property()
@@ -343,53 +343,54 @@ class User(GraphObject):
         return True
 
     def changeJobField(self, graph, job):
-        self.job_category.clear()
-        self.job_category = JobCategory.safeSelect(graph=graph, job_name=job)
+        self.work_at.clear()
+        self.work_at.add(JobCategory.safeSelect(graph=graph, job_name=job))
         selfUpdateGraph(graph=graph, obj=self)
         return True
 
     def updateRankIfNeeded(self):
         self.score += 1
         if self.score < 15:
-            self.rank = Rank.First
+            self.rank = Rank.First.value
+
         elif self.score < 30:
-            self.rank = Rank.Second
+            self.rank = Rank.Second.value
         elif self.score < 60:
-            self.rank = Rank.Third
+            self.rank = Rank.Third.value
         elif self.score < 70:
-            self.rank = Rank.Fourth
+            self.rank = Rank.Fourth.value
         elif self.score < 85:
-            self.rank = Rank.Fifth
+            self.rank = Rank.Fifth.value
         else:
             self.rank = Rank.Sixth
 
 
     def changeResidency(self, graph, city):
-        self.residency.clear()
-        self.residency = Residency.safeSelect(graph=graph, name=city)
+        self.residing.clear()
+        self.residing.add(Residency.safeSelect(graph=graph, name=city))
         selfUpdateGraph(graph=graph, obj=self)
         return True
 
     def changeAssociateParty(self, graph, party):
-        self.residency.clear()
-        self.associate_party = Party.safeSelect(graph=graph, name=party)
+        self.associate_party.clear()
+        self.associate_party.add(Party.safeSelect(graph=graph, name=party))
         selfUpdateGraph(graph=graph, obj=self)
         return True
 
     def voteLaw(self, graph, law_name, is_upvote=True):
         law = Law.safeSelect(graph=graph, name=law_name)
         if is_upvote:
-            if law in self.voted_against:
+            if law in list(self.voted_against):
                 self.voted_against.remove(law)
 
             self.voted_for.add(law)
         else:
-            if law in self.voted_for:
+            if law in list(self.voted_for):
                 self.voted_for.remove(law)
 
             self.voted_against.add(law)
 
-        self.updateRankIfNeeded(graph)
+        self.updateRankIfNeeded()
 
         selfUpdateGraph(graph=graph, obj=self)
 
