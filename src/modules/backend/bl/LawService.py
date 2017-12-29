@@ -1,11 +1,11 @@
 from flask import json
 from py2neo import Graph
 
-from modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
+from src.modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
 from src.modules.backend.app.WebAPI import app
 from src.modules.backend.bl.UserService import isUserExist
 from src.modules.backend.common import CommonUtils
-from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party
+from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party, Tag
 import itertools
 from operator import itemgetter
 
@@ -41,30 +41,74 @@ def getNewLaws(graph, user_id):
 
 
 def getAllElectedVotedInLaw(graph, law):
-    curr_vote = getLatestVote(law)
-    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__})" \
-            f"WHERE v.raw_title={curr_vote.raw_title} AND " \
-            f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e)" \
+    curr_vote = getLatestVoteForLaw(graph=graph, law=law)
+    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__}) " \
+            f"WHERE v.raw_title='{curr_vote.raw_title}' AND " \
+            f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e))" \
             f"RETURN e"
-    return CommonUtils.runQueryOnGraph(graph, query)
+    data = graph.run(query).data()
+    electors = []
+    for e in data:
+        electors.append(ElectedOfficial.wrap(e['e']))
+
+    return electors
+
+
+def getLatestVoteForLaw(graph, law):
+    query = f"MATCH (v:{Vote.__name__}) MATCH (l:{Law.__name__}) WHERE l.name='{law.name}' AND (v)-[:{LAW}]->(l) " \
+            f"RETURN v " \
+            f"ORDER BY v.timestamp " \
+            f"LIMIT 1"
+    logger.debug(f"Query is: {query}")
+    data = graph.run(query).data()[0]
+    logger.debug(f"data returned: {data['v']}")
+    return Vote.wrap(data['v'])
 
 
 def getAllElectedInPartyVotedInLaw(graph, law, party):
-    curr_vote = getLatestVote(law)
-    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__}) MATCH (p:{Party.__name__}" \
-            f"WHERE v.raw_title={curr_vote.raw_title} AND p.name={party.name} AND (e)-[:{MEMBER_OF_PARTY}]->(p) AND " \
-            f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e)" \
+    curr_vote = getLatestVoteForLaw(graph=graph, law=law)
+    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (v:{Vote.__name__}) MATCH (p:{Party.__name__} " \
+            f"WHERE v.raw_title='{curr_vote.raw_title}' AND p.name='{party.name}' AND (e)-[:{MEMBER_OF_PARTY}]->(p) AND " \
+            f"((v)-[:{ELECTED_VOTED_FOR}]->(e) OR (v)-[:{ELECTED_VOTED_AGAINST}]->(e) OR (v)-[:{ELECTED_ABSTAINED}]->(e)) " \
             f"RETURN e"
-    return CommonUtils.runQueryOnGraph(graph, query)
+    data = graph.run(query).data()
+    electors = []
+    for e in data:
+        electors.append(ElectedOfficial.wrap(e['e']))
+
+    return electors
+
+
+def getAllElectedInPartyMissingFromLaw(graph, law, party):
+    curr_vote = getLatestVoteForLaw(graph=graph, law=law)
+    query = f"MATCH (e:{ElectedOfficial.__name__}) MATCH (p:{Party.__name__}) MATCH (v:{Vote.__name__}) " \
+            f"WHERE v.raw_title='{curr_vote.raw_title}' " \
+            f"AND p.name='{party.name}' " \
+            f"AND (e)-[:{MEMBER_OF_PARTY}]->(p) " \
+            f"AND (v)-[:{ELECTED_MISSING}]->(e) " \
+            f"RETURN e"
+    data = graph.run(query).data()
+    electors = []
+    for e in data:
+        electors.append(ElectedOfficial.wrap(e['e']))
+
+    return electors
+
 
 def getNumOfLawsByTag(graph, tag, num_of_laws):
-    filtered_laws = list(Law.select(graph=graph)) if tag is None else list(Law.select(graph=graph).where(f"'{tag}' _.tagged_as")) ## TODO check if correct with db
+    tag_query = "" if tag is None else f"MATCH (t:{Tag.__name__}) WHERE t.name='{tag.name}' AND (l)-[:{TAGGED_AS}]->(t)"
+    query = f"MATCH (l:{Law.__name__}) {tag_query} " \
+                     f"RETURN l " \
+                     f"ORDER BY l.timestamp " \
+                     f"LIMIT {num_of_laws}"
 
-    # law = list(Law.select(graph=graph))
-    # filtered_laws = laws if tag is None else list(filter(lambda law: tag in itertools.islice(sorted(law.tags_votes, key=itemgetter(1), reverse=True), 2), laws))
-    sorted_laws = filtered_laws.sort(key=lambda obj: obj.timestamp, reverse=True)
-    top_laws = itertools.islice(sorted_laws, num_of_laws)
-    return top_laws
+    logger.debug(f"query is: {query}")
+    data = graph.run(query).data()
+    laws = []
+    for law in data:
+        laws.append(Law.wrap(law['l']))
+
+    return laws
 
 
 def getLawsByDateInterval(graph, start_date, end_date):
