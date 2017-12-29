@@ -1,8 +1,8 @@
 from flask import jsonify
 from py2neo.ogm import *
 
-from src.modules.backend.common.APIConstants import BLANK_TAG, Rank, InvolvementLevel
-from src.modules.dal.relations.Relations import *
+from backend.common.APIConstants import Rank, InvolvementLevel
+from dal.relations.Relations import *
 
 
 def selfUpdateGraph(graph, obj):
@@ -174,6 +174,7 @@ class Vote(GraphObject):
     raw_title=Property()
     type=Property()
     date=Property()
+    timestamp=Property()
     url = Property()
     vote_num = Property()
     meeting_num = Property()
@@ -185,7 +186,7 @@ class Vote(GraphObject):
     elected_missing = RelatedTo(ElectedOfficial)
 
     @classmethod
-    def                                           createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
+    def createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
         vote = cls()
         for attr in [attrib for attrib in dir(vote) if "__" not in attrib]:
             if attr in vote_json:
