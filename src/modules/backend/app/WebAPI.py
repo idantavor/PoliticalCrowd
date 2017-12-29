@@ -108,7 +108,7 @@ def getCategoryNames():
 def register():
     app.logger.info("got registration request")
     user_id = getUsersId(request)
-    if isUserExist(graph, user_id):
+    if not isUserExist(graph, user_id):
         birth_year = request.form.get(BIRTH_YEAR)
         job = request.form.get(JOB)
         city = request.form.get(RESIDENCY)

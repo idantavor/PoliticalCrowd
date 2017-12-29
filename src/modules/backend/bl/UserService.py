@@ -8,7 +8,7 @@ import datetime
 logger = logging.getLogger(__name__)
 
 def isUserExist(graph, user_token):
-    return graph.evaluate("MATCH (n:User) WHERE n.token = \"{x}\" RETURN n LIMIT 1", x=user_token) is not None
+    return graph.evaluate(f"MATCH (n:User) WHERE n.token = '{user_token}' RETURN n LIMIT 1") is not None
 
 
 def getUserAge(userNode):
