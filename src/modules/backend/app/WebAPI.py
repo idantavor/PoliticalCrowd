@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
-from modules.backend.bl.LawService import submitVoteAndTags, getNewLaws, getLawsByDateInterval, getLawStats
+from modules.backend.bl.LawService import submitVoteAndTags, getNewLaws, getLawsByDateInterval, getElectedOfficialLawStats
 from modules.backend.bl.PartyService import getAllPartiesEfficiencyByTag
 from modules.backend.bl.ProfileService import updatePersonlInfo
 from modules.backend.bl.UserService import isUserExist
@@ -53,7 +53,6 @@ def getUsersId(request):
 
 # api functions for first time login -- begin
 
-#@app.route("/getParties", methods=['GET'])
 def getParties():
     app.logger.debug("got parties request")
     parties = Party.select(graph)
@@ -63,7 +62,6 @@ def getParties():
     app.logger.debug("returning "+str(parties_names))
     return parties_names
 
-#@app.route("/getResidencies", methods=['GET'])
 def getResidencies():
     app.logger.debug("got elected officials request")
     residencies = Residency.select(graph)
@@ -73,7 +71,6 @@ def getResidencies():
     app.logger.debug("returning " + str(residencies_names))
     return residencies_names
 
-#@app.route("/getJobCategories", methods=['GET'])
 def getJobCategories():
     app.logger.debug("got elected officials request")
     job_categories = JobCategory.select(graph)
@@ -186,16 +183,14 @@ def validElectedOfficial(elected_official):
 def usersPartyMatch():
     user_id = getUsersId(request)
     num_of_laws_backwards = validNumberOfLaws(request.form.get(NUM_OF_LAWS_BACKWARDS))
-    user = User.safeSelect(graph, user_id)
-    return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user=user, tags=None ,num_of_laws_backwards=num_of_laws_backwards))
+    return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user_id=user_id, tags=None ,num_of_laws_backwards=num_of_laws_backwards))
 
 @app.route("/getUserPartiesVotesMatchByTag", methods=['POST'])
 def userPartiesVotesMatchByTag():
     user_id = getUsersId(request)
     num_of_laws_backwards = validNumberOfLaws(request.form.get(NUM_OF_LAWS_BACKWARDS))
     tags = validTags(request.form.get(TAGS))
-    user = User.safeSelect(graph, user_id)
-    return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user=user, tags=tags ,num_of_laws_backwards=num_of_laws_backwards))
+    return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user_id=user_id, tags=tags ,num_of_laws_backwards=num_of_laws_backwards))
 
 
 @app.route("/getUserToUsersMatch", methods=['POST'])
@@ -261,7 +256,7 @@ def lawVoteSubmit():
 
     submitVoteAndTags(graph, law_name, tags, user_id, vote)
 
-    law_stats = getLawStats(graph=graph, law_name=law_name, user_vote=vote,user_id=user_id)
+    law_stats = getElectedOfficialLawStats(graph=graph, law_name=law_name, user_vote=vote, user_id=user_id)
 
     return jsonify(law_stats)
 

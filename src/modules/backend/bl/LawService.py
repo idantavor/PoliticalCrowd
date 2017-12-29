@@ -1,7 +1,6 @@
 from flask import json
 from py2neo import Graph
 
-from modules.backend.common.CommonUtils import runQueryOnGraph
 from modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
 from src.modules.backend.app.WebAPI import app
 from src.modules.backend.bl.UserService import isUserExist
@@ -115,9 +114,13 @@ def createStatsResponse(user_party, user_vote, votes):
     return res
 
 
-def getLawStats(graph, law_name, user_vote, user_id):
+def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
 
-    query = "MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:{}]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name = '{}' return e, p.name"
+    query = "MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party)" \
+            " WHERE (v)-[:LAW]->(l) AND (v)-[:{}]->(e) AND " \
+            "(e)-[:MEMBER_OF_PARTY]->(p) AND " \
+            "l.name = '{}' return e, p.name"
+
     voted_for = graph.run(query.format(ELECTED_VOTED_FOR,law_name)).data()
     voted_against = graph.run(query.format(ELECTED_VOTED_AGAINST, law_name)).data()
     missing = graph.run(query.format(ELECTED_MISSING, law_name)).data()

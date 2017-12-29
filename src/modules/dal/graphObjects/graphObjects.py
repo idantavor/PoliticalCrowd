@@ -188,7 +188,7 @@ class Vote(GraphObject):
     elected_missing = RelatedTo(ElectedOfficial)
 
     @classmethod
-    def                                           createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
+    def createVoteFromJson(cls, vote_json,law,vote_details_json=None,graph=None):
         vote = cls()
         for attr in [attrib for attrib in dir(vote) if "__" not in attrib]:
             if attr in vote_json:
@@ -281,7 +281,7 @@ class Residency(GraphObject):
 class User(GraphObject):
     __primarykey__ = "token"
 
-    token = Property()
+    token = Property(key="token")
     birth_year = Property(key="birthYear")
     involvement_level = Property(key="involvmentLevel")
     rank = Property(key="rank")
