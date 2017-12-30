@@ -104,12 +104,11 @@ def getAllElectedInPartyMissingFromLaw(graph, law, party):
 
 
 def getNumOfLawsByTag(graph, tag, num_of_laws):
-    tag_query = "" if tag is None else f"MATCH (t:{Tag.__name__} "+"{name="+tag.name+"})"\
-                                       +f" WHERE (l)-[:{TAGGED_AS}]->(t)"
+    tag_query = "" if tag is None else f"MATCH (t:{Tag.__name__}) WHERE (l)-[:{TAGGED_AS}]->(t) AND t.name='{tag}'"
     query = f"MATCH (l:{Law.__name__}) {tag_query} " \
-                     f"RETURN l " \
-                     f"ORDER BY l.timestamp " \
-                     f"LIMIT {num_of_laws}"
+            f"RETURN l " \
+            f"ORDER BY l.timestamp " \
+            f"LIMIT {num_of_laws}"
 
     logger.debug(f"query is: {query}")
     data = graph.run(query).data()
@@ -177,13 +176,13 @@ def createStatsResponse(user_party, user_vote, votes):
     return res
 
 
-def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
+def _getElectedOfficialLawStats(graph, law_name, user_vote, user_party):
 
     query = f"MATCH(l:{Law.__name__}) MATCH(v:{Vote.__name__}) MATCH(e:{ElectedOfficial.__name__}) MATCH(p:{Party.__name__}) WHERE (v)-[:{LAW}]->(l) "\
             +"AND (v)-[:{}]->(e) AND " \
             f"(e)-[:{MEMBER_OF_PARTY}]->(p) AND "\
             +"l.name = '{}' return e, p.name "\
-            "ORDER BY v.timestamp"
+            "ORDER BY v.timestamp DESCENDING"
 
     voted_for = graph.run(query.format(ELECTED_VOTED_FOR,law_name)).data()
     voted_against = graph.run(query.format(ELECTED_VOTED_AGAINST, law_name)).data()
@@ -197,12 +196,15 @@ def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
 
     votes = calculateStats(voted_for, voted_against, missing, abstained)
 
-    user = User.safeSelect(graph = graph, token=user_id)
-    user_party = list(user.associate_party)[0].name
-
     res = createStatsResponse(user_party, user_vote, votes)
 
     return res
+
+
+def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
+    user = User.safeSelect(graph = graph, token=user_id)
+    user_party = list(user.associate_party)[0].name
+    return _getElectedOfficialLawStats(graph=graph, law_name=law_name, user_vote=user_vote, user_party=user_party)
 
 
 
