@@ -3,7 +3,7 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 
 from src.modules.backend.bl import LawService
-from src.modules.backend.bl.PartyService import getAllPartiesEfficiencyByTag, getAllLawProposalPerParty, absentFromVotesByParty
+from src.modules.backend.bl.PartyService import getAllPartiesEfficiencyByTag, getAllLawProposalPerParty, absentFromVotes
 from src.modules.backend.bl.ProfileService import updatePersonlInfo
 from src.modules.backend.bl.UserService import isUserExist
 from src.modules.backend.common.APIConstants import *
@@ -157,13 +157,13 @@ def allLawProposalsByTag():
 @app.route("/getAllAbsentFromVotes", methods=['POST'])
 def allAbsentFromVotes():
     getUsersId(request)
-    return jsonify(absentFromVotesByParty(graph = graph, tag=None, num_of_laws_backward=100))
+    return jsonify(absentFromVotes(graph = graph, tag=None, num_of_laws_backward=100))
 
 @app.route("/getAllAbsentFromVotesByTag", methods=['POST'])
 def allAbsentFromVotesByTag():
     getUsersId(request)
     tag = validTags(request.form.get(TAGS))
-    return jsonify(absentFromVotesByParty(graph = graph, tag=tag, num_of_laws_backward=100))
+    return jsonify(absentFromVotes(graph = graph, tag=tag, num_of_laws_backward=100))
 
 
 # Personal Statistics

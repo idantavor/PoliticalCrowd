@@ -71,7 +71,7 @@ def getAllLawProposalPerParty(graph, tag, num_of_laws_backward):
     return all_proposals
 
 
-def _getPartyMissingFromLaws(graph, party, laws):
+def _getPartyAbsentFromLaws(graph, party, laws):
     member_missing = {}
     total = len(party.party_members) * len(laws)
     total_missing = 0
@@ -92,12 +92,12 @@ def _getPartyMissingFromLaws(graph, party, laws):
     return party_missing
 
 
-def absentFromVotesByParty(graph, tag, num_of_laws_backward):
+def absentFromVotes(graph, tag, num_of_laws_backward):
     laws = LawService.getNumOfLawsByTag(graph=graph, tag=tag, num_of_laws=num_of_laws_backward)
     parties_missing = dict()
 
     for party in Party.select(graph=graph):
-        parties_missing[party.name] = _getPartyMissingFromLaws(graph=graph, party=party, laws=laws)
+        parties_missing[party.name] = _getPartyAbsentFromLaws(graph=graph, party=party, laws=laws)
 
     logger.debug(f"Parties absent: {str(parties_missing)}")
 
@@ -121,7 +121,7 @@ def createGeneralStats(num_of_laws_backward):
             raw_data_proposals = jsonify(getAllLawProposalPerParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
             GeneralInfo.createGeneralInfo(graph=graph, type=law_proposals, raw_data=raw_data_proposals)
 
-            raw_data_absent = jsonify(absentFromVotesByParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+            raw_data_absent = jsonify(absentFromVotes(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
             GeneralInfo.createGeneralInfo(graph=graph, type=absent_stats, raw_data=raw_data_absent)
 
 

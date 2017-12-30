@@ -14,6 +14,11 @@ from src.modules.dal.relations.Relations import *
 logger = logging.getLogger(__name__)
 
 
+def getLawTags(graph, law_name):
+    law = Law.safeSelect(graph=graph, name=law_name)
+    tags = sorted(law.tags_votes, key=lambda tup: tup[1], reverse=True)
+
+
 def submitVoteAndTags(graph, law_name, tags, user_id, vote):
     user = User.safeSelect(graph=graph, token=user_id)
     if vote is None:
