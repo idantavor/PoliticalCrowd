@@ -70,7 +70,7 @@ class MAIL_CONSTANTS:
 
         @staticmethod
         def get_summary_message(summary_list):
-            ret="Crawler finished iteration -total of {} objects where added to the db\n operations:{}".format(len(summary_list),summary_list)
+            ret="Crawler finished iteration -total of {} objects where added to the db\n operations:".format(len(summary_list))
             if len(summary_list)>0:
                 ret+="\n-".join(summary_list)
             return ret
