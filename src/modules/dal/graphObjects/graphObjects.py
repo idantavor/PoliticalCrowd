@@ -1,11 +1,12 @@
-import time
+import time,os
 from flask import jsonify
 from py2neo.ogm import *
-
+from py2neo import Graph
 from src.modules.backend.common.APIConstants import Rank, InvolvementLevel
 from src.modules.dal.relations.Relations import *
+import json
 
-
+STATIC_FOLDER_PATH=os.path.join(os.path.dirname(__file__),"static")
 def selfUpdateGraph(graph, obj):
     graph.begin(autocommit=True)
     graph.push(obj)
@@ -86,6 +87,10 @@ class ElectedOfficial(GraphObject):
         official.is_active = official_json.get('is_active')
         official.homepage_url=official_json.get('homepage_url')
         return official
+
+    @staticmethod
+    def get_voting_officials(graph:Graph):
+        return [r['e'] for r in graph.run('match (e:ElectedOfficial)-[:MEMBER_OF_PARTY]->(p:Party) where not (p.name="אינם חברי כנסת")  return e')]
 
     @staticmethod
     def safeSelect(graph, name):
@@ -181,6 +186,7 @@ class Vote(GraphObject):
     url = Property()
     vote_num = Property()
     meeting_num = Property()
+    num_of_electors_voted = Property()
 
     law = RelatedTo(Law)
     elected_voted_for = RelatedTo(ElectedOfficial)
@@ -195,6 +201,7 @@ class Vote(GraphObject):
             if attr in vote_json:
                 vote.__setattr__(attr, vote_json[attr])
         vote.law.add(law)
+        members_viewd_set=set()
         if vote_details_json is not None:
             if graph is None:
                 raise Exception("pass a graph object in order to retreive the Elected officials")
@@ -203,22 +210,29 @@ class Vote(GraphObject):
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_for.add(member)
+                members_viewd_set.add(member.name)
             for member_name in vote_details_json['ABSTAINED']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_abstained.add(member)
-            for member_name in vote_details_json['DIDNT_VOTE']:
-                member = ElectedOfficial.select(graph, member_name).first()
-                if member is None:
-                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
-                vote.elected_missing.add(member)
+                members_viewd_set.add(member.name)
             for member_name in vote_details_json['AGAINST']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_against.add(member)
-            vote.timestamp=int(time.time())
+                members_viewd_set.add(member.name)
+            for member_name in vote_details_json['DIDNT_VOTE']:
+                member = ElectedOfficial.select(graph, member_name).first()
+                if member is None:
+                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                vote.elected_missing.add(member)
+                members_viewd_set.add(member.name)
+            # add all missing members
+            for m in ElectedOfficial.get_voting_officials(graph):
+                if m['name'] not in members_viewd_set:
+                    vote.elected_missing.add(ElectedOfficial.select(graph, m['name']).first())
         return vote
 
     @staticmethod
@@ -254,18 +268,34 @@ class JobCategory(GraphObject):
 
         return job
 
+    @staticmethod
+    def add_jobs_to_db(graph,logger=None):
+        with open(os.path.join(STATIC_FOLDER_PATH,'jobs.txt'), 'rb') as f:
+            for line in f.readlines():
+                if len(line) > 1:  # line not empty
+                    # insert the job to the db
+                    job_name = str(line.strip(), encoding='utf-8')
+                    job_cat = JobCategory.select(graph, primary_value=job_name).first()  # type: JobCategory
+                    if job_cat == None:
+                        if logger is not None:
+                            logger.info("adding JobCategory {} to the DB".format(job_name))
+                        JobCategory.createJobCategory(graph=graph, job_name=job_name)
+                    else:
+                        if logger is not None:
+                            logger.info("job cat {} already exists".format(job_name))
 
 class Residency(GraphObject):
     __primarykey__ = "name"
 
     name = Property()
-
+    eng_name = Property()
     users = RelatedFrom("User", RESIDING)
 
     @classmethod
-    def createResidency(cls, graph, city_name):
+    def createResidency(cls, graph, city_name,eng_name=""):
         residency = cls()
         residency.name = city_name
+        residency.eng_name = eng_name
         graph.begin(autocommit=True)
         graph.push(residency)
 
@@ -278,6 +308,14 @@ class Residency(GraphObject):
 
         return city
 
+    @staticmethod
+    def add_residencies_to_db(graph, logger=None):
+        with open(os.path.join(STATIC_FOLDER_PATH,"israel-cities.json"),'r',encoding='utf-8') as f:
+            d=json.load(f)
+        for city in d :
+            if Residency.select(graph,primary_value=city['name']).first() is None:
+                logger.info("adding residency {} to db".format(city.get('name')))
+                Residency.createResidency(graph,city.get('name'),city.get('engName'))
 
 class User(GraphObject):
     __primarykey__ = "token"

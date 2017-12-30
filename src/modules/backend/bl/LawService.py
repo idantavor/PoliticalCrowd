@@ -6,9 +6,10 @@ from itertools import islice
 
 from flask import json
 
+from modules.backend.common.APIConstants import InvolvementLevel
 from src.modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
 
-from src.modules.backend.bl.UserService import isUserExist
+from src.modules.backend.bl import UserService
 from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party, Tag, GeneralInfo
 
 from src.modules.dal.relations.Relations import *
@@ -41,11 +42,20 @@ def submitVoteAndTags(graph, law_name, tags, user_id, vote):
         logger.debug("[" + str(user_id) + "] rank updated")
 
 def getNewLaws(graph, user_id):
-    if isUserExist(graph, user_id):
-        data = GeneralInfo.safeSelect(graph=graph, type="new_laws")
-        return data.raw_data
-    else:
-        raise Exception("ileagal operation")
+    today_timestamp = time.mktime(
+        datetime.strptime(
+            datetime.fromtimestamp(time.time()).date().strftime("%d/%m/%Y"),
+            "%d/%m/%Y")
+        .timetuple())
+    new_laws = Law.select(graph).where(f"_timestamp = {today_timestamp}")
+    user = User.safeSelect(token=user_id)
+    inv = user.involvement_level
+    res = []
+    for law in new_laws:
+        law_latest_vote = getLatestVoteForLaw(graph=graph, law=law)
+        if law_latest_vote.num_of_electors_voted > inv:
+            res.append(law.name)
+    return res
 
 
 def getAllElectedVotedInLaw(graph, law):
@@ -176,13 +186,13 @@ def createStatsResponse(user_party, user_vote, votes):
     return res
 
 
-def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
+def _getElectedOfficialLawStats(graph, law_name, user_vote, user_party):
 
     query = f"MATCH(l:{Law.__name__}) MATCH(v:{Vote.__name__}) MATCH(e:{ElectedOfficial.__name__}) MATCH(p:{Party.__name__}) WHERE (v)-[:{LAW}]->(l) "\
             +"AND (v)-[:{}]->(e) AND " \
             f"(e)-[:{MEMBER_OF_PARTY}]->(p) AND "\
             +"l.name = '{}' return e, p.name "\
-            "ORDER BY v.timestamp"
+            "ORDER BY v.timestamp DESCENDING"
 
     voted_for = graph.run(query.format(ELECTED_VOTED_FOR,law_name)).data()
     voted_against = graph.run(query.format(ELECTED_VOTED_AGAINST, law_name)).data()
@@ -196,12 +206,15 @@ def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
 
     votes = calculateStats(voted_for, voted_against, missing, abstained)
 
-    user = User.safeSelect(graph = graph, token=user_id)
-    user_party = list(user.associate_party)[0].name
-
     res = createStatsResponse(user_party, user_vote, votes)
 
     return res
+
+
+def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
+    user = User.safeSelect(graph = graph, token=user_id)
+    user_party = list(user.associate_party)[0].name
+    return _getElectedOfficialLawStats(graph=graph, law_name=law_name, user_vote=user_vote, user_party=user_party)
 
 
 
