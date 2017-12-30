@@ -57,11 +57,13 @@ def get_party_and_role_from_role_title(role_title):
     role = None if role_suffix == "" else role_suffix
     return party, role
 
+
 def normalize(string):
     if string is None:
         return None
     else:
         return " ".join(string.strip().split())
+
 
 def get_member_dict(member_page_url, image_link, member_name):
     logger.info("getting url for member {}".format(member_name))
@@ -91,11 +93,11 @@ def get_party_to_member_dict() -> dict:
     elem_members = html_tree.xpath('//table[@id="dlMkMembers"]//td[.//@class="PhotoAsistno" or .//@class="PhotoAsist"]')
     logger.info("found {} voting elected officials ".format(len(elem_members)))
     for elem_member in elem_members:
-        image_src=elem_member.xpath('./img/@src')[0] # type: str
+        image_src = elem_member.xpath('./img/@src')[0]  # type: str
         if image_src.startswith("http"):
-            image_url=image_src
+            image_url = image_src
         else:
-            image_url = "{}{}".format(URLS.BASE_URL,image_src)
+            image_url = "{}{}".format(URLS.BASE_URL, image_src)
         name = elem_member.xpath('./a/text()')[0]
         mk_id = elem_member.xpath('./a/@href')[0].split('=')[1]
         member_page_url = "{}{}".format(URLS.MEMBER_PAGE_BASE_URL, mk_id)
@@ -123,8 +125,10 @@ def add_parties_and_members_to_db():
         m = ElectedOfficial.createElectedOfficialFromJson(member_dict, p)
         graph.push(m)
 
+
 def dstring_to_timestamp(date):
     return dateparser.parse(date).timestamp()
+
 
 def get_votes(date_from="1/1/2003", date_to=None, retries=45):
     result_votes = []
@@ -161,23 +165,23 @@ def get_votes(date_from="1/1/2003", date_to=None, retries=45):
         logger.error("failed to get response for {}".format(URLS.VOTES_SEARCH_URL))
         raise Exception("failed to get response for {}".format(URLS.VOTES_SEARCH_URL))
     html_tree = html.fromstring(str(res.content, encoding='windows-1255', errors='ignore'))
-    first_loop=True
+    first_loop = True
     while True:
         result_meta_data_str = html_tree.xpath('//td[@class="DataText3"]/text()')[1]
         total_results = int(result_meta_data_str.split()[0].strip())
         if first_loop:
             logger.info("found {} votes".format(total_results))
-            first_loop=False
-        if total_results==0:
+            first_loop = False
+        if total_results == 0:
             return result_votes
         next_cnt = int(result_meta_data_str.split()[-1].strip())
-        logger.info("fetching results {}-{}".format(next_cnt-20,next_cnt))
+        logger.info("fetching results {}-{}".format(next_cnt - 20, next_cnt))
         elem_votes = html_tree.xpath('//tr[./td/a[@class="DataText6"]]')
         for elem_vote in elem_votes:
             vote_dict = {
                 "raw_title": elem_vote.xpath('.//a/text()')[0],
                 "type": elem_vote.xpath('.//a/text()')[0].split("-")[0].strip(),
-                "url": "{}/{}".format(URLS.VOTES_BASE_URL,elem_vote.xpath('.//a/@href')[0]),
+                "url": "{}/{}".format(URLS.VOTES_BASE_URL, elem_vote.xpath('.//a/@href')[0]),
                 "date": elem_vote.xpath('./td[4]/text()')[0].strip(),
                 "vote_num": elem_vote.xpath('./td[3]/text()')[0].strip(),
                 "meeting_num": elem_vote.xpath('./td[2]/text()')[0].strip(),
@@ -229,19 +233,23 @@ def add_votes_to_db(date_from='1/8/2003'):
                     description = law_dict['description']
                     initiators = law_dict['initiators']  # type: list
                     if law_obj is None:
-                        law_obj = Law.createLaw(law_name, time.time(), None, description, url)  # type: Law
+                        law_obj = Law.createLaw(law_name, vote['timestamp'], None, description, url)  # type: Law
                         summary_list.append("new law added :{}".format(law_name))
                     else:
                         law_obj.description = description
                     for initiator in initiators:
                         initiator_member = ElectedOfficial.select(graph, normalize(initiator)).first()
                         if initiator_member is None:
-                            logger.error("fail to retreive initiator elected official {} from db by serching for {}".format(initiator,normalize(initiator)))
+                            logger.error(
+                                "fail to retreive initiator elected official {} from db by serching for {}".format(
+                                    initiator, normalize(initiator)))
                         else:
                             law_obj.proposed_by.add(initiator_member)
                 voting_details = get_vote_detail_dict(vote['url'])
                 vote_obj = Vote.createVoteFromJson(vote, law_obj, voting_details, graph)
                 summary_list.append("new vote added :{}".format(vote['raw_title']))
+                if law_obj.timestamp < vote_obj.timestamp:
+                    law_obj.timestamp = vote_obj.timestamp
                 graph.push(law_obj)
                 graph.push(vote_obj)
             except Exception as e:
@@ -274,12 +282,15 @@ def parse_args(args):
     parser.add_argument('--db_addr', dest="db_ip", default=None, help="database ip address")
     parser.add_argument('--interval', dest="interval", default=10, help="scraping interval in minutes", type=int)
     parser.add_argument('--mail', action='store_true', dest="mail", default=False, help="send mail debugs")
-    parser.add_argument('--members', action='store_true', dest="members", default=False, help="crawl for members and parties")
+    parser.add_argument('--members', action='store_true', dest="members", default=False,
+                        help="crawl for members and parties")
     parser.add_argument('--local', action='store_true', dest="is_local", default=False,
                         help="is db resides on local machine")
-    parser.add_argument('--delete_db',action='store_true',help="delete all db content",default=False,dest="delete_db")
-    parser.add_argument('--add_jobs',action='store_true',help="add job objects to db",default=False,dest="add_jobs")
-    parser.add_argument('--add_residency', action='store_true', help="add residency objects to db", default=False, dest="add_residency")
+    parser.add_argument('--delete_db', action='store_true', help="delete all db content", default=False,
+                        dest="delete_db")
+    parser.add_argument('--add_jobs', action='store_true', help="add job objects to db", default=False, dest="add_jobs")
+    parser.add_argument('--add_residency', action='store_true', help="add residency objects to db", default=False,
+                        dest="add_residency")
 
     parsed_args = parser.parse_args(args)
     parsed_args.from_date = dateparser.parse(parsed_args.from_date)
@@ -301,10 +312,10 @@ def main(args):
         add_parties_and_members_to_db()
         exit(0)
     if pargs.add_jobs:
-        JobCategory.add_jobs_to_db(graph,logger)
+        JobCategory.add_jobs_to_db(graph, logger)
         exit(0)
     if pargs.add_residency:
-        Residency.add_residencies_to_db(graph,logger)
+        Residency.add_residencies_to_db(graph, logger)
         exit(0)
     try:
         first_time = True
@@ -317,14 +328,14 @@ def main(args):
             if pargs.mail:
                 UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO, MAIL_CONSTANTS.MESSAGES.get_start_message(date))
             logger.info("crawler started interation from {}".format(date))
-            summary=add_votes_to_db(date)
+            summary = add_votes_to_db(date)
             if pargs.mail:
-                UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO, MAIL_CONSTANTS.MESSAGES.get_summary_message(summary))
+                UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO,
+                                MAIL_CONSTANTS.MESSAGES.get_summary_message(summary))
             logger.info("crawler finised iteration")
             first_time = False
             now = datetime.datetime.now()
-            time.sleep(60*pargs.interval)
+            time.sleep(60 * pargs.interval)
     except Exception as e:
-        UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_ERROR,MAIL_CONSTANTS.MESSAGES.get_error_message(e))
-        logger.error('Crawler encountered an error :\n{}\nSTACK TRACE:\n{}'.format(e,traceback.print_stack()))
-
+        UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_ERROR, MAIL_CONSTANTS.MESSAGES.get_error_message(e))
+        logger.error('Crawler encountered an error :\n{}\nSTACK TRACE:\n{}'.format(e, traceback.print_stack()))
