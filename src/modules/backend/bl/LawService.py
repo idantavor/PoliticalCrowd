@@ -6,7 +6,7 @@ from itertools import islice
 
 from flask import json
 
-from modules.backend.common.APIConstants import InvolvementLevel
+from src.modules.backend.common.APIConstants import InvolvementLevel
 from src.modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
 
 from src.modules.backend.bl import UserService

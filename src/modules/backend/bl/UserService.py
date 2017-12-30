@@ -2,7 +2,7 @@ from datetime import datetime
 
 import logging
 
-from modules.backend.bl.LawService import _getElectedOfficialLawStats
+from src.modules.backend.bl import LawService
 from src.modules.backend.common.APIConstants import AgeRange, JOB_FOR, JOB_AGAINST, RESIDENT_FOR, RESIDENT_AGAINST, \
     AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT
 from src.modules.dal.graphObjects.graphObjects import *
@@ -125,7 +125,7 @@ def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 1
     user = User.safeSelect(graph=graph, token=user_id)
     user_party = list(user.associate_party)[0].name
     for selection in last_laws_voted:
-        law_votes=_getElectedOfficialLawStats(graph=graph, law_name=selection["l.name"], user_party=user_party,user_vote=selection["user_vote"])
+        law_votes = LawService._getElectedOfficialLawStats(graph=graph, law_name=selection["l.name"], user_party=user_party,user_vote=selection["user_vote"])
         for party, info in law_votes:
             if res.get(party) is None:
                 res[party] = {"match" : info["match"],

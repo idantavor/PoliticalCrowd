@@ -80,9 +80,6 @@ def getAllLawProposalPerParty(graph, tag, num_of_laws_backward):
     return all_proposals
 
 
-getAllLawProposalPerParty(graph=bolt_connect(), tag=None, num_of_laws_backward=100)
-
-
 def _getPartyAbsentFromLaws(graph, party, laws):
     member_missing = {}
     total = len(party.party_members) * len(laws)
@@ -138,8 +135,6 @@ def createGeneralStats(num_of_laws_backward):
 
             raw_data_absent = json.dumps(absentFromVotes(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
             GeneralInfo.createGeneralInfo(graph=graph, type=absent_stats, raw_data=raw_data_absent)
-
-            print(f"finish for tag:{tag_name}")
 
 
 def getGeneralStats(graph, type, tag):
