@@ -278,6 +278,9 @@ def parse_args(args):
     parser.add_argument('--local', action='store_true', dest="is_local", default=False,
                         help="is db resides on local machine")
     parser.add_argument('--delete_db',action='store_true',help="delete all db content",default=False,dest="delete_db")
+    parser.add_argument('--add_jobs',action='store_true',help="add job objects to db",default=False,dest="add_jobs")
+    parser.add_argument('--add_residency', action='store_true', help="add residency objects to db", default=False, dest="add_residency")
+
     parsed_args = parser.parse_args(args)
     parsed_args.from_date = dateparser.parse(parsed_args.from_date)
     if parsed_args.is_local:
@@ -296,6 +299,12 @@ def main(args):
         exit(0)
     if pargs.members:
         add_parties_and_members_to_db()
+        exit(0)
+    if pargs.add_jobs:
+        JobCategory.add_jobs_to_db(graph,logger)
+        exit(0)
+    if pargs.add_residency:
+        Residency.add_residencies_to_db(graph,logger)
         exit(0)
     try:
         first_time = True

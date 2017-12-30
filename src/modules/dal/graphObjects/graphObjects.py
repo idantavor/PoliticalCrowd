@@ -1,11 +1,12 @@
-import time
+import time,os
 from flask import jsonify
 from py2neo.ogm import *
 from py2neo import Graph
 from src.modules.backend.common.APIConstants import Rank, InvolvementLevel
 from src.modules.dal.relations.Relations import *
+import json
 
-
+STATIC_FOLDER_PATH=os.path.join(os.path.dirname(__file__),"static")
 def selfUpdateGraph(graph, obj):
     graph.begin(autocommit=True)
     graph.push(obj)
@@ -267,18 +268,34 @@ class JobCategory(GraphObject):
 
         return job
 
+    @staticmethod
+    def add_jobs_to_db(graph,logger=None):
+        with open(os.path.join(STATIC_FOLDER_PATH,'jobs.txt'), 'rb') as f:
+            for line in f.readlines():
+                if len(line) > 1:  # line not empty
+                    # insert the job to the db
+                    job_name = str(line.strip(), encoding='utf-8')
+                    job_cat = JobCategory.select(graph, primary_value=job_name).first()  # type: JobCategory
+                    if job_cat == None:
+                        if logger is not None:
+                            logger.info("adding JobCategory {} to the DB".format(job_name))
+                        JobCategory.createJobCategory(graph=graph, job_name=job_name)
+                    else:
+                        if logger is not None:
+                            logger.info("job cat {} already exists".format(job_name))
 
 class Residency(GraphObject):
     __primarykey__ = "name"
 
     name = Property()
-
+    eng_name = Property()
     users = RelatedFrom("User", RESIDING)
 
     @classmethod
-    def createResidency(cls, graph, city_name):
+    def createResidency(cls, graph, city_name,eng_name=""):
         residency = cls()
         residency.name = city_name
+        residency.eng_name = eng_name
         graph.begin(autocommit=True)
         graph.push(residency)
 
@@ -291,6 +308,14 @@ class Residency(GraphObject):
 
         return city
 
+    @staticmethod
+    def add_residencies_to_db(graph, logger=None):
+        with open(os.path.join(STATIC_FOLDER_PATH,"israel-cities.json"),'r',encoding='utf-8') as f:
+            d=json.load(f)
+        for city in d :
+            if Residency.select(graph,primary_value=city['name']).first() is None:
+                logger.info("adding residency {} to db".format(city.get('name')))
+                Residency.createResidency(graph,city.get('name'),city.get('engName'))
 
 class User(GraphObject):
     __primarykey__ = "token"
