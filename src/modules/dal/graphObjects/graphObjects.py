@@ -7,10 +7,18 @@ from src.modules.dal.relations.Relations import *
 import json
 
 STATIC_FOLDER_PATH=os.path.join(os.path.dirname(__file__),"static")
+SCHEME_FOLDER_PATH=os.path.join(os.path.abspath(os.path.join(os.path.dirname(__file__),'..','scheme')))
+
 def selfUpdateGraph(graph, obj):
     graph.begin(autocommit=True)
     graph.push(obj)
 
+def build_index_schemes(graph,logger=None):
+    with open(os.path.join(SCHEME_FOLDER_PATH,'dbindex.cypher'),'r') as query_file:
+        for query in query_file:
+            if logger is not None:
+                logger.info("running query :{}".format(query))
+            graph.run(query)
 
 class Party(GraphObject):
     __primarykey__ = "name"
