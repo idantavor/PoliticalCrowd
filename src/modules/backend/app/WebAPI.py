@@ -131,36 +131,36 @@ def validTags(tag):
 @app.route("/getAllPartiesEfficiency", methods=['POST'])
 def allPartiesEfficiency():
     getUsersId(request)
-    return jsonify(PartyService.getAllPartiesEfficiencyByTag(graph = graph, tag=None, num_of_laws_backward=100))
+    return PartyService.getGeneralStats(graph = graph, tag=PartyService.ALL,type=PartyService.PARTY_EFFICIENCY)
 
 
 @app.route("/getAllPartiesEfficiencyByTag", methods=['POST'])
 def allPartiesEfficiencyByTag():
     getUsersId(request)
     tag = validTags(request.form.get(TAGS))
-    return jsonify(PartyService.getAllPartiesEfficiencyByTag(graph = graph, tag=tag, num_of_laws_backward=100))
+    return PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.PARTY_EFFICIENCY)
 
 @app.route("/getAllLawProposals", methods=['POST'])
 def allLawProposals():
     getUsersId(request)
-    return jsonify(PartyService.getAllLawProposalPerParty(graph = graph, tag=None, num_of_laws_backward=100))
+    return PartyService.getGeneralStats(graph=graph, tag=PartyService.ALL, type=PartyService.LAW_PROPOSAL)
 
 @app.route("/getAllLawProposalsByTag", methods=['POST'])
 def allLawProposalsByTag():
     getUsersId(request)
     tag = validTags(request.form.get(TAGS))
-    return jsonify(PartyService.getAllLawProposalPerParty(graph = graph, tag=tag, num_of_laws_backward=100))
+    return PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.LAW_PROPOSAL)
 
 @app.route("/getAllAbsentFromVotes", methods=['POST'])
 def allAbsentFromVotes():
     getUsersId(request)
-    return jsonify(PartyService.absentFromVotesByParty(graph = graph, tag=None, num_of_laws_backward=100))
+    return PartyService.getGeneralStats(graph = graph, tag=PartyService.ALL, type=PartyService.ABSENT_STATS)
 
 @app.route("/getAllAbsentFromVotesByTag", methods=['POST'])
 def allAbsentFromVotesByTag():
     getUsersId(request)
     tag = validTags(request.form.get(TAGS))
-    return jsonify(PartyService.absentFromVotesByParty(graph = graph, tag=tag, num_of_laws_backward=100))
+    return PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.ABSENT_STATS)
 
 
 # Personal Statistics
@@ -179,48 +179,28 @@ def validElectedOfficial(elected_official):
 @app.route("/getUserPartiesVotesMatch", methods=['POST'])
 def usersPartyMatch():
     user_id = getUsersId(request)
-    num_of_laws_backwards = validNumberOfLaws(request.form.get(NUM_OF_LAWS_BACKWARDS))
-    return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user_id=user_id, tags=None ,num_of_laws_backwards=num_of_laws_backwards))
+    return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user_id=user_id, tag=None))
 
 @app.route("/getUserPartiesVotesMatchByTag", methods=['POST'])
 def userPartiesVotesMatchByTag():
     user_id = getUsersId(request)
-    num_of_laws_backwards = validNumberOfLaws(request.form.get(NUM_OF_LAWS_BACKWARDS))
-    tags = validTags(request.form.get(TAGS))
-    return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user_id=user_id, tags=tags ,num_of_laws_backwards=num_of_laws_backwards))
-
-
-@app.route("/getUserToUsersMatch", methods=['POST'])
-def userToUsersMatch():
-    user_id = getUsersId(request)
-    num_of_laws_backwards = validNumberOfLaws(request.form.get(NUM_OF_LAWS_BACKWARDS))
-    user = User.safeSelect(graph, user_id)
-    return jsonify(UserService.getUserToUsersMatchByTag(graph=graph, user=user, tags=None, num_of_laws_backwards=num_of_laws_backwards))
-
-@app.route("/getUserToUsersMatchByTag", methods=['POST'])
-def userToUsersMatchByTag():
-    user_id = getUsersId(request)
-    num_of_laws_backwards = validNumberOfLaws(request.form.get(NUM_OF_LAWS_BACKWARDS))
-    tags = validTags(request.form.get(TAGS))
-    user = User.safeSelect(graph, user_id)
-    return jsonify(UserService.getUserToUsersMatchByTag(graph=graph, user=user, tags=tags, num_of_laws_backwards=num_of_laws_backwards))
+    tag = validTags(request.form.get(TAGS))
+    return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user_id=user_id, tag=tag))
 
 
 @app.route("/getUserToElectedOfficialMatch", methods=['POST'])
 def userToElectedOfficialMatch():
     user_id = getUsersId(request)
-    num_of_laws_backwards = validNumberOfLaws(request.form.get(NUM_OF_LAWS_BACKWARDS))
     elected_official = ElectedOfficial.safeSelect(validElectedOfficial(request.form.get(ELECTED_OFFICIAL)))
-    return jsonify(UserService.getUserToElectedOfficialMatchByTag(graph=graph, user=user_id, tags=None, elected_official = elected_official,num_of_laws_backwards=num_of_laws_backwards))
+    return jsonify(UserService.getUserMatchForOfficial(graph=graph, user_id=user_id, member_name=elected_official, tag=None))
 
 @app.route("/getUserToElectedOfficialMatchByTag", methods=['POST'])
 def userToElectedOfficialMatchByTag():
     user_id = getUsersId(request)
-    num_of_laws_backwards = validNumberOfLaws(request.form.get(NUM_OF_LAWS_BACKWARDS))
-    tags = validNumberOfLaws(request.form.get(TAGS))
+    tag = validTags(request.form.get(TAGS))
     elected_official = ElectedOfficial.safeSelect(validElectedOfficial(request.form.get(ELECTED_OFFICIAL)))
-    user = User.safeSelect(graph, user_id)
-    return jsonify(UserService.getUserToElectedOfficialMatchByTag(graph=graph, user=user, tags=tags, elected_official = elected_official,num_of_laws_backwards=num_of_laws_backwards))
+    return jsonify(
+        UserService.getUserMatchForOfficial(graph=graph, user_id=user_id, member_name=elected_official, tag=tag))
 
 # Laws
 

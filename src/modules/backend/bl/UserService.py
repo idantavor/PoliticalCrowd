@@ -2,6 +2,7 @@ from datetime import datetime
 
 import logging
 
+from modules.backend.bl.LawService import _getElectedOfficialLawStats
 from src.modules.backend.common.APIConstants import AgeRange, JOB_FOR, JOB_AGAINST, RESIDENT_FOR, RESIDENT_AGAINST, \
     AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT
 from src.modules.dal.graphObjects.graphObjects import *
@@ -106,16 +107,36 @@ def getUserMatchForOfficial(graph, user, member_name, tag=None):
     return jsonify(match_dict)
 
 
-def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards):
-    query = f"MATCH(u:{User.__name__})-[user_vote]->(l:{Law.__name__})-[:{LAW}]->(v:{Vote.__name__})-[elected_vote]->(e:{ElectedOfficial.__name__})-[:{MEMBER_OF_PARTY}]->(p:{Party.__name__}) " \
-            f"{'' if tag is None else ' MATCH(t:{}'.format(Tag.__name__)})"\
-            f"WHERE u.token={user_id} " \
-            f"{'' if tag is None else 'AND (l)-[:{}]->(t)'.format(TAGGED_AS)}" \
-            f"RETURN user_vote, l, elected_vote, v.date,e,p.name " \
-            f"ORDER BY l.timestamp DESCENDING " \
-            f"LIMIT {num_of_laws_backwards}"
 
-    graph.run(query)
+def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 100):
+
+    query = f"MATCH(u:{User.__name__})-[user_vote]->(l:{Law.__name__}){'' if tag is None else '<-[:{}]-(t:{})'.format(TAGGED_AS, Tag.__name__)} " \
+            f"WHERE u.token={user_id}{'' if tag is None else ' AND t.name={}'.format(tag)} " \
+            f"RETURN user_vote, l.name ORDER BY l.timestamp DESCENDING LIMIT {num_of_laws_backwards}"
+
+    last_laws_voted = graph.run(query).data()
+    res = {}
+    law_num = 0
+    user = User.safeSelect(graph=graph, token=user_id)
+    user_party = list(user.associate_party)[0].name
+    for selection in last_laws_voted:
+        law_votes=_getElectedOfficialLawStats(graph=graph, law_name=selection["l.name"], user_party=user_party,user_vote=selection["user_vote"])
+        for party, info in law_votes:
+            if res.get(party) is None:
+                res[party] = {"match" : info["match"],
+                              "is_users_party" : info["is_users_party"]}
+            else:
+                res[party]["match"] += info["match"]
+            law_num += 1
+    for party, match_count in res:
+        res[party] = {"match" :(res[party] / law_num),
+                      "is_users_party" : res[party]["is_users_party"]}
+
+    return res
+
+
+
+
 
 
 
