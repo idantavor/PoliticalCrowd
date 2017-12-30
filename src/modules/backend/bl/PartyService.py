@@ -13,6 +13,9 @@ PARTY_EFFICIENCY = "party_efficiency"
 MEMBER_EFFICIENCY = "memeber_efficiency"
 PARTY_MISSING = "party_missing"
 MEMBER_MISSING = "member_missing"
+LAW_PROPOSAL = "law_proposals"
+ABSENT_STATS = "abesnt_stats"
+ALL = "All"
 
 def _getPartyEfficiancy(graph, party, laws):
     num_of_members = len(party.party_members)
@@ -71,7 +74,7 @@ def getAllLawProposalPerParty(graph, tag, num_of_laws_backward):
     return all_proposals
 
 
-def _getPartyMissingFromLaws(graph, party, laws):
+def _getPartyAbsentFromLaws(graph, party, laws):
     member_missing = {}
     total = len(party.party_members) * len(laws)
     total_missing = 0
@@ -92,12 +95,12 @@ def _getPartyMissingFromLaws(graph, party, laws):
     return party_missing
 
 
-def absentFromVotesByParty(graph, tag, num_of_laws_backward):
+def absentFromVotes(graph, tag, num_of_laws_backward):
     laws = LawService.getNumOfLawsByTag(graph=graph, tag=tag, num_of_laws=num_of_laws_backward)
     parties_missing = dict()
 
     for party in Party.select(graph=graph):
-        parties_missing[party.name] = _getPartyMissingFromLaws(graph=graph, party=party, laws=laws)
+        parties_missing[party.name] = _getPartyAbsentFromLaws(graph=graph, party=party, laws=laws)
 
     logger.debug(f"Parties absent: {str(parties_missing)}")
 
@@ -108,9 +111,9 @@ def createGeneralStats(num_of_laws_backward):
     graph = bolt_connect()
     with open("Tags.txt", "r") as tags_file:
         for tag_name in tags_file:
-            party_efficiency = f"PartiesEfficiancy_{tag_name}"
-            law_proposals = f"LawProposal_{tag_name}"
-            absent_stats = f"AbsentStats_{tag_name}"
+            party_efficiency = f"{PARTY_EFFICIENCY}_{tag_name}"
+            law_proposals = f"{LAW_PROPOSAL}_{tag_name}"
+            absent_stats = f"{ABSENT_STATS}_{tag_name}"
 
             if "All" in tag_name:
                 tag_name = None
@@ -121,8 +124,16 @@ def createGeneralStats(num_of_laws_backward):
             raw_data_proposals = jsonify(getAllLawProposalPerParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
             GeneralInfo.createGeneralInfo(graph=graph, type=law_proposals, raw_data=raw_data_proposals)
 
-            raw_data_absent = jsonify(absentFromVotesByParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+            raw_data_absent = jsonify(absentFromVotes(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
             GeneralInfo.createGeneralInfo(graph=graph, type=absent_stats, raw_data=raw_data_absent)
+
+
+def getGeneralStats(graph, type, tag):
+    node_type = f"{type}_{tag}"
+    data = GeneralInfo.safeSelect(graph=graph, type=node_type).raw_data
+    return data
+
+
 
 
 
