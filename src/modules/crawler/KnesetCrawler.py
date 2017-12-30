@@ -299,6 +299,7 @@ def parse_args(args):
     parser.add_argument('--add_jobs', action='store_true', help="add job objects to db", default=False, dest="add_jobs")
     parser.add_argument('--add_residency', action='store_true', help="add residency objects to db", default=False,
                         dest="add_residency")
+    parser.add_argument('--run_base_queries', action='store_true', help="run basic queries for index addition and constains", default=False, dest="run_queries")
     parser.add_argument('--build_db', action='store_true', help="build db from scratch", default=False,
                         dest="build_db")
 
@@ -326,6 +327,9 @@ def main(args):
         exit(0)
     if pargs.add_residency:
         Residency.add_residencies_to_db(graph, logger)
+        exit(0)
+    if pargs.run_queries:
+        build_index_schemes(graph,logger)
         exit(0)
     if pargs.build_db:
         build_index_schemes(graph,logger)
