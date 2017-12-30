@@ -142,7 +142,7 @@ class Law(GraphObject):
         law.status = status
         law.description = description
         law.link = link
-        law.tags_votes = []  # This list should contain tag GraphObject instead of a dictionary that is not supported
+        law.tags_votes = []
         return law
 
     @staticmethod
@@ -360,8 +360,10 @@ class User(GraphObject):
             self.rank = Rank.Fourth.value
         elif self.score < 85:
             self.rank = Rank.Fifth.value
-        else:
+        elif self.score < 100:
             self.rank = Rank.Sixth
+        else:
+            self.rank = Rank.Seventh
 
 
     def changeResidency(self, graph, city):

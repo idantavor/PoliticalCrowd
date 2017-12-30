@@ -19,6 +19,15 @@ NUM_OF_LAWS_BACKWARDS="num_of_laws_backwards"
 ELECTED_OFFICIAL="elected_official"
 START_DATE = "start_date"
 END_DATE = "end_date"
+JOB_FOR = "job_for"
+JOB_AGAINST = "job_against"
+RESIDENT_FOR = "resident_for"
+RESIDENT_AGAINST = "resident_against"
+AGE_FOR = "age_for"
+AGE_AGAINST = "age_against"
+SAME = "same"
+DIFF = "different"
+MEMBER_ABSENT = "member_absent"
 
 
 
@@ -35,9 +44,18 @@ class Response(Enum):
 
 
 class Rank(Enum):
-    First = "Tourist"
-    Second = "Citizen"
-    Third = ""
-    Fourth = ""
-    Fifth = ""
-    Sixth = ""
+    First = "תייר"
+    Second = "אזרח"
+    Fourth = "חבר עירייה"
+    Fifth = "ראש עיר"
+    Third = "חבר כנסת"
+    Sixth = "לוביסט"
+    Seventh = "טייקון"
+
+
+class AgeRange(Enum):
+    First = 18
+    Second = 21
+    Third = 30
+    Fourth = 40
+    Fifth = 55

@@ -266,7 +266,7 @@ def updatePersonalInfo():
     residency = request.form.get(RESIDENCY)
     party = request.form.get(PARTY)
     involvement_level = request.form.get(INVOLVEMENT_LEVEL)
-    updatePersonlInfo(graph = graph, user_id=user_id, job = job, residency = residency, party = party, involvement_level = involvement_level)
+    ProfileService.updatePersonlInfo(graph = graph, user_id=user_id, job = job, residency = residency, party = party, involvement_level = involvement_level)
     return jsonify("Success")
 
 
