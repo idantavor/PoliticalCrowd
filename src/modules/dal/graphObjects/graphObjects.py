@@ -1,7 +1,7 @@
 import time
 from flask import jsonify
 from py2neo.ogm import *
-
+from py2neo import Graph
 from src.modules.backend.common.APIConstants import Rank, InvolvementLevel
 from src.modules.dal.relations.Relations import *
 
@@ -86,6 +86,10 @@ class ElectedOfficial(GraphObject):
         official.is_active = official_json.get('is_active')
         official.homepage_url=official_json.get('homepage_url')
         return official
+
+    @staticmethod
+    def get_voting_officials(graph:Graph):
+        return [r['e'] for r in graph.run('match (e:ElectedOfficial)-[:MEMBER_OF_PARTY]->(p:Party) where not (p.name="אינם חברי כנסת")  return e')]
 
     @staticmethod
     def safeSelect(graph, name):
@@ -196,6 +200,7 @@ class Vote(GraphObject):
             if attr in vote_json:
                 vote.__setattr__(attr, vote_json[attr])
         vote.law.add(law)
+        members_viewd_set=set()
         if vote_details_json is not None:
             if graph is None:
                 raise Exception("pass a graph object in order to retreive the Elected officials")
@@ -204,21 +209,29 @@ class Vote(GraphObject):
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_for.add(member)
+                members_viewd_set.add(member.name)
             for member_name in vote_details_json['ABSTAINED']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_abstained.add(member)
-            for member_name in vote_details_json['DIDNT_VOTE']:
-                member = ElectedOfficial.select(graph, member_name).first()
-                if member is None:
-                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
-                vote.elected_missing.add(member)
+                members_viewd_set.add(member.name)
             for member_name in vote_details_json['AGAINST']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_against.add(member)
+                members_viewd_set.add(member.name)
+            for member_name in vote_details_json['DIDNT_VOTE']:
+                member = ElectedOfficial.select(graph, member_name).first()
+                if member is None:
+                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                vote.elected_missing.add(member)
+                members_viewd_set.add(member.name)
+            # add all missing members
+            for m in ElectedOfficial.get_voting_officials(graph):
+                if m['name'] not in members_viewd_set:
+                    vote.elected_missing.add(ElectedOfficial.select(graph, m['name']).first())
             vote.timestamp=int(time.time())
         return vote
 
