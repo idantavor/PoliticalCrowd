@@ -46,14 +46,20 @@ def getUsersDistForLaw(graph, law_name):
     voted_againts = list(law.users_voted_againts)
     num_of_voters = len(voted_for) + len(voted_againts)
 
-    job_for_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in groupby(voted_for, key=lambda user: user.work_at.name)}
-    job_againts_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in groupby(voted_againts, key=lambda user: user.work_at.name)}
+    job_for_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
+                      groupby(sorted(voted_for, key=lambda user: user.work_at.name), key=lambda user: user.work_at.name)}
+    job_againts_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
+                          groupby(sorted(voted_againts, key=lambda user: user.work_at.name), key=lambda user: user.work_at.name)}
 
-    resident_for_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in groupby(voted_for, key=lambda user: user.residing.name)}
-    resident_againts_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in groupby(voted_againts, key=lambda user: user.residing.name)}
+    resident_for_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
+                           groupby(sorted(voted_for, key=lambda user: user.residing.name), key=lambda user: user.residing.name)}
+    resident_againts_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
+                               groupby(sorted(voted_againts, key=lambda user: user.residing.name), key=lambda user: user.residing.name)}
 
-    age_range_for_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in groupby(voted_for, key=lambda user: getUserAgeRange(user))}
-    age_range_againts_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in groupby(voted_againts, key=lambda user: getUserAgeRange(user))}
+    age_range_for_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
+                            groupby(sorted(voted_for, key=lambda user: getUserAgeRange(user)), key=lambda user: getUserAgeRange(user))}
+    age_range_againts_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
+                                groupby(sorted(voted_againts, key=lambda user: getUserAgeRange(user)), key=lambda user: getUserAgeRange(user))}
 
     distribution = {JOB_FOR: job_for_groups, JOB_AGAINST: job_againts_groups,
                     RESIDENT_FOR: resident_for_groups, RESIDENT_AGAINST: resident_againts_groups,
