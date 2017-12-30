@@ -121,7 +121,6 @@ class Law(GraphObject):
     __primarykey__ = "name"
     name = Property(key="name")
     timestamp = Property(key="timestamp")
-    status = Property(key="status")
     description = Property()
     link = Property()
     tags_votes = Property()

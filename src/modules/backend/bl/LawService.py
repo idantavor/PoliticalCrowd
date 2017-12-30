@@ -7,7 +7,7 @@ from flask import json
 from src.modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
 
 from src.modules.backend.bl.UserService import isUserExist
-from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party, Tag
+from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party, Tag, GeneralInfo
 
 from src.modules.dal.relations.Relations import *
 
@@ -34,8 +34,8 @@ def submitVoteAndTags(graph, law_name, tags, user_id, vote):
 
 def getNewLaws(graph, user_id):
     if isUserExist(graph, user_id):
-        data = json.load(open('new_laws.json'))
-        return len(data), data
+        data = GeneralInfo.safeSelect(graph=graph, type="new_laws")
+        return data.raw_data
     else:
         raise Exception("ileagal operation")
 
@@ -119,7 +119,9 @@ def getLawsByDateInterval(graph, start_date, end_date):
         .where("{}<= _.timestamp <={}".format(start_date, end_date))
     res = {}
     for law in law_set:
-        res[law.name] = law.__dict__
+        res[law.name] = {"link" : law.link,
+                         "description" : law.description}
+                         #"tags" : law.tags_votes} #TODO: change to top 2 tags
     return res
 
 
