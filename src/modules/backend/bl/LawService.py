@@ -161,13 +161,22 @@ def calculateStats(voted_for, voted_against, missing, abstained):
 
 
     for party, votes in voted_against.items():
-        res[party][VOTED_AGAINST] = votes
+        if res.get(party) is None:
+            res[party] = {VOTED_AGAINST : votes}
+        else:
+            res[party][VOTED_AGAINST] = votes
 
     for party, votes in missing.items():
-        res[party][ELECTED_MISSING] = votes
+        if res.get(party) is None:
+            res[party] = {ELECTED_MISSING : votes}
+        else:
+            res[party][ELECTED_MISSING] = votes
 
     for party, votes in abstained.items():
-        res[party][ELECTED_ABSTAINED] = votes
+        if res.get(party) is None:
+            res[party] = {ELECTED_ABSTAINED : votes}
+        else:
+            res[party][ELECTED_ABSTAINED] = votes
 
     return res
 
