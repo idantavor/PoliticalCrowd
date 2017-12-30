@@ -232,7 +232,6 @@ class Vote(GraphObject):
             for m in ElectedOfficial.get_voting_officials(graph):
                 if m['name'] not in members_viewd_set:
                     vote.elected_missing.add(ElectedOfficial.select(graph, m['name']).first())
-            vote.timestamp=int(time.time())
         return vote
 
     @staticmethod
