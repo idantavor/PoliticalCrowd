@@ -209,7 +209,7 @@ class Vote(GraphObject):
             if attr in vote_json:
                 vote.__setattr__(attr, vote_json[attr])
         vote.law.add(law)
-        members_viewd_set=set()
+        members_viewed=set()
         if vote_details_json is not None:
             if graph is None:
                 raise Exception("pass a graph object in order to retreive the Elected officials")
@@ -218,28 +218,28 @@ class Vote(GraphObject):
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_for.add(member)
-                members_viewd_set.add(member.name)
+                members_viewed.add(member.name)
             for member_name in vote_details_json['ABSTAINED']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_abstained.add(member)
-                members_viewd_set.add(member.name)
+                members_viewed.add(member.name)
             for member_name in vote_details_json['AGAINST']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_against.add(member)
-                members_viewd_set.add(member.name)
+                members_viewed.add(member.name)
             for member_name in vote_details_json['DIDNT_VOTE']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
                     raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_missing.add(member)
-                members_viewd_set.add(member.name)
+                members_viewed.add(member.name)
             # add all missing members
             for m in ElectedOfficial.get_voting_officials(graph):
-                if m['name'] not in members_viewd_set:
+                if m['name'] not in members_viewed:
                     vote.elected_missing.add(ElectedOfficial.select(graph, m['name']).first())
         return vote
 
