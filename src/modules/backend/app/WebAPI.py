@@ -134,36 +134,36 @@ def validTags(tag):
 @app.route("/getAllPartiesEfficiency", methods=['POST'])
 def allPartiesEfficiency():
     getUsersId(request)
-    return PartyService.getGeneralStats(graph = graph, tag=PartyService.ALL,type=PartyService.PARTY_EFFICIENCY)
+    return jsonify(PartyService.getGeneralStats(graph = graph, tag=PartyService.ALL,type=PartyService.PARTY_EFFICIENCY))
 
 
 @app.route("/getAllPartiesEfficiencyByTag", methods=['POST'])
 def allPartiesEfficiencyByTag():
     getUsersId(request)
     tag = validTags(request.form.get(TAGS))
-    return PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.PARTY_EFFICIENCY)
+    return jsonify(PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.PARTY_EFFICIENCY))
 
 @app.route("/getAllLawProposals", methods=['POST'])
 def allLawProposals():
     getUsersId(request)
-    return PartyService.getGeneralStats(graph=graph, tag=PartyService.ALL, type=PartyService.LAW_PROPOSAL)
+    return jsonify(PartyService.getGeneralStats(graph=graph, tag=PartyService.ALL, type=PartyService.LAW_PROPOSAL))
 
 @app.route("/getAllLawProposalsByTag", methods=['POST'])
 def allLawProposalsByTag():
     getUsersId(request)
     tag = validTags(request.form.get(TAGS))
-    return PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.LAW_PROPOSAL)
+    return jsonify(PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.LAW_PROPOSAL))
 
 @app.route("/getAllAbsentFromVotes", methods=['POST'])
 def allAbsentFromVotes():
     getUsersId(request)
-    return PartyService.getGeneralStats(graph = graph, tag=PartyService.ALL, type=PartyService.ABSENT_STATS)
+    return jsonify(PartyService.getGeneralStats(graph = graph, tag=PartyService.ALL, type=PartyService.ABSENT_STATS))
 
 @app.route("/getAllAbsentFromVotesByTag", methods=['POST'])
 def allAbsentFromVotesByTag():
     getUsersId(request)
     tag = validTags(request.form.get(TAGS))
-    return PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.ABSENT_STATS)
+    return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.ABSENT_STATS))
 
 
 # Personal Statistics
