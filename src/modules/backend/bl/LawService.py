@@ -104,12 +104,11 @@ def getAllElectedInPartyMissingFromLaw(graph, law, party):
 
 
 def getNumOfLawsByTag(graph, tag, num_of_laws):
-    tag_query = "" if tag is None else f"MATCH (t:{Tag.__name__} "+"{name="+tag.name+"})"\
-                                       +f" WHERE (l)-[:{TAGGED_AS}]->(t)"
+    tag_query = "" if tag is None else f"MATCH (t:{Tag.__name__}) WHERE (l)-[:{TAGGED_AS}]->(t) AND t.name='{tag}'"
     query = f"MATCH (l:{Law.__name__}) {tag_query} " \
-                     f"RETURN l " \
-                     f"ORDER BY l.timestamp " \
-                     f"LIMIT {num_of_laws}"
+            f"RETURN l " \
+            f"ORDER BY l.timestamp " \
+            f"LIMIT {num_of_laws}"
 
     logger.debug(f"query is: {query}")
     data = graph.run(query).data()
