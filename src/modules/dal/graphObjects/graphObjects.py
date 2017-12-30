@@ -186,6 +186,7 @@ class Vote(GraphObject):
     url = Property()
     vote_num = Property()
     meeting_num = Property()
+    num_of_electors_voted = Property()
 
     law = RelatedTo(Law)
     elected_voted_for = RelatedTo(ElectedOfficial)

@@ -6,6 +6,7 @@ from itertools import islice
 
 from flask import json
 
+from modules.backend.common.APIConstants import InvolvementLevel
 from src.modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
 
 from src.modules.backend.bl import UserService
@@ -47,9 +48,13 @@ def getNewLaws(graph, user_id):
             "%d/%m/%Y")
         .timetuple())
     new_laws = Law.select(graph).where(f"_timestamp = {today_timestamp}")
+    user = User.safeSelect(token=user_id)
+    inv = user.involvement_level
     res = []
     for law in new_laws:
-        res.append(law.name)
+        law_latest_vote = getLatestVoteForLaw(graph=graph, law=law)
+        if law_latest_vote.num_of_electors_voted > inv:
+            res.append(law.name)
     return res
 
 

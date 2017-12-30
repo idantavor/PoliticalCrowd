@@ -32,9 +32,9 @@ MEMBER_ABSENT = "member_absent"
 
 
 class InvolvementLevel(Enum):
-    LOW = 1
-    MEDIUM = 2
-    HIGH = 3
+    LOW = 50
+    MEDIUM = 20
+    HIGH = 1
 
 
 class Response(Enum):
