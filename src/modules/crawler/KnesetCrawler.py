@@ -333,28 +333,28 @@ def main(args):
         Residency.add_residencies_to_db(graph,logger)
         add_parties_and_members_to_db()
         exit(0)
-        first_time = True
-        now = datetime.datetime.now()
-        while True:
-            try:
-                if first_time:
-                    date = pargs.from_date.strftime('%d/%m/%Y')
-                else:
-                    date = now.strftime('%d/%m/%Y')
-                if pargs.mail:
-                    UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO, MAIL_CONSTANTS.MESSAGES.get_start_message(date))
-                logger.info("crawler started interation from {}".format(date))
-                summary = add_votes_to_db(date)
-                if pargs.mail:
-                    UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO,
-                                    MAIL_CONSTANTS.MESSAGES.get_summary_message(summary))
-                logger.info("crawler finised iteration")
-                first_time = False
-                now = datetime.datetime.now()
-                time.sleep(60 * pargs.interval)
-            except KeyboardInterrupt as k:
-                logger.info("Crawler was stopped by Keyboard interrupt")
-            except Exception as e:
-                UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_ERROR, MAIL_CONSTANTS.MESSAGES.get_error_message(e))
-                logger.error('Crawler encountered an error :\n{}\\n{}'.format(e, traceback.print_exc()))
-                continue
+    first_time = True
+    now = datetime.datetime.now()
+    while True:
+        try:
+            if first_time:
+                date = pargs.from_date.strftime('%d/%m/%Y')
+            else:
+                date = now.strftime('%d/%m/%Y')
+            if pargs.mail:
+                UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO, MAIL_CONSTANTS.MESSAGES.get_start_message(date))
+            logger.info("crawler started interation from {}".format(date))
+            summary = add_votes_to_db(date)
+            if pargs.mail:
+                UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO,
+                                MAIL_CONSTANTS.MESSAGES.get_summary_message(summary))
+            logger.info("crawler finised iteration")
+            first_time = False
+            now = datetime.datetime.now()
+            time.sleep(60 * pargs.interval)
+        except KeyboardInterrupt as k:
+            logger.info("Crawler was stopped by Keyboard interrupt")
+        except Exception as e:
+            UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_ERROR, MAIL_CONSTANTS.MESSAGES.get_error_message(e))
+            logger.error('Crawler encountered an error :\n{}\\n{}'.format(e, traceback.print_exc()))
+            continue
