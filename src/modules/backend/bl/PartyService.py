@@ -139,7 +139,7 @@ def createGeneralStats(num_of_laws_backward):
 
 def getGeneralStats(graph, type, tag):
     node_type = f"{type}_{tag}"
-    data = GeneralInfo.safeSelect(graph=graph, type=node_type).raw_data
+    data = json.loads(GeneralInfo.safeSelect(graph=graph, type=node_type).raw_data)
     return data
 
 
