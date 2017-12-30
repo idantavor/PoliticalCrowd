@@ -126,7 +126,10 @@ def register():
 def validTags(tag):
     if tag is None:
         raise Exception("Missing tags")
+
+
     return tag
+
 
 @app.route("/getAllPartiesEfficiency", methods=['POST'])
 def allPartiesEfficiency():

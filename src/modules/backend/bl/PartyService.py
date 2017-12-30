@@ -66,18 +66,21 @@ def getAllPartiesEfficiencyByTag(graph, tag, num_of_laws_backward):
 # TODO debug smart
 def getAllLawProposalPerParty(graph, tag, num_of_laws_backward):
     laws = LawService.getNumOfLawsByTag(graph=graph, tag=tag, num_of_laws=num_of_laws_backward)
-    proposed_by = [e for law in laws for e in list(law.proposed_by)]
+    proposed_by = [(e.name, list(e.member_of_party)[0].name) for law in laws for e in list(law.proposed_by)]
 
     total_num_of_laws = len(laws)
     all_proposals = dict()
 
-    for party, elected_officals in itertools.groupby(proposed_by, key=lambda elected: list(elected.member_of_party)[0].name):
-        elected_list = list(elected_officals)
+    for party_name, names_vs_party in itertools.groupby(proposed_by, key=lambda tup: tup[1]):
+        elected_list = [name for name, party in list(filter(lambda p: p[1] == party_name, proposed_by))]
         num_of_proposals = len(elected_list)
-        elected_proposals = {name : len(list(group)) for name, group in itertools.groupby(elected_list, key=lambda elected: elected.name)}
-        all_proposals[party.name] = {NUM_OF_PROPOSALS:(num_of_proposals/float(total_num_of_laws)), ELECTED_PROPOSALS: elected_proposals}
+        elected_proposals = {name : len(list(group)) for name, group in itertools.groupby(sorted(elected_list))}
+        all_proposals[party_name] = {NUM_OF_PROPOSALS:(num_of_proposals/float(total_num_of_laws)), ELECTED_PROPOSALS: elected_proposals}
 
     return all_proposals
+
+
+getAllLawProposalPerParty(graph=bolt_connect(), tag=None, num_of_laws_backward=100)
 
 
 def _getPartyAbsentFromLaws(graph, party, laws):
