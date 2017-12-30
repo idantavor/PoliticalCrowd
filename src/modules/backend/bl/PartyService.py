@@ -13,6 +13,8 @@ PARTY_EFFICIENCY = "party_efficiency"
 MEMBER_EFFICIENCY = "memeber_efficiency"
 PARTY_MISSING = "party_missing"
 MEMBER_MISSING = "member_missing"
+LAW_PROPOSAL = "law_proposals"
+ABSENT_STATS = "abesnt_stats"
 
 def _getPartyEfficiancy(graph, party, laws):
     num_of_members = len(party.party_members)
@@ -108,9 +110,9 @@ def createGeneralStats(num_of_laws_backward):
     graph = bolt_connect()
     with open("Tags.txt", "r") as tags_file:
         for tag_name in tags_file:
-            party_efficiency = f"PartiesEfficiancy_{tag_name}"
-            law_proposals = f"LawProposal_{tag_name}"
-            absent_stats = f"AbsentStats_{tag_name}"
+            party_efficiency = f"{PARTY_EFFICIENCY}_{tag_name}"
+            law_proposals = f"{LAW_PROPOSAL}_{tag_name}"
+            absent_stats = f"{ABSENT_STATS}_{tag_name}"
 
             if "All" in tag_name:
                 tag_name = None
@@ -123,6 +125,14 @@ def createGeneralStats(num_of_laws_backward):
 
             raw_data_absent = jsonify(absentFromVotes(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
             GeneralInfo.createGeneralInfo(graph=graph, type=absent_stats, raw_data=raw_data_absent)
+
+
+def getGeneralStats(graph, type, tag="All"):
+    node_type = f"{type}_{tag}"
+    data = GeneralInfo.safeSelect(graph=graph, type=node_type).raw_data
+    return data
+
+
 
 
 

@@ -2,6 +2,8 @@ from datetime import datetime
 import time
 
 import logging
+from itertools import islice
+
 from flask import json
 
 from src.modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
@@ -16,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 def getLawTags(graph, law_name):
     law = Law.safeSelect(graph=graph, name=law_name)
-    tags = sorted(law.tags_votes, key=lambda tup: tup[1], reverse=True)
+    tags = islice(sorted(law.tags_votes, key=lambda tup: tup[1], reverse=True), 2)
+    return [tag[0] for tag in tags]
 
 
 def submitVoteAndTags(graph, law_name, tags, user_id, vote):
