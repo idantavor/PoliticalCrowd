@@ -232,7 +232,7 @@ def lawsByDateInterval():
     getUsersId(request)
     start_date = request.form.get(START_DATE)
     end_date = request.form.get(END_DATE)
-    jsonify(LawService.getLawsByDateInterval(graph = graph, start_date = start_date, end_date = end_date))
+    return jsonify(LawService.getLawsByDateInterval(graph = graph, start_date = start_date, end_date = end_date))
 
 
 
@@ -240,9 +240,7 @@ def lawsByDateInterval():
 def lawNotification():
     app.logger.info("law notification request recieved")
     user_id = getUsersId(request)
-    size, data = LawService.getNewLaws(graph=graph, user_id=user_id)
-    return jsonify({"number_of_new_laws" : size,
-                    "new_laws" : data})
+    return jsonify(LawService.getNewLaws(graph=graph, user_id=user_id))
 
 # Laws Actions
 
