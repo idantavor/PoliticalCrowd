@@ -15,6 +15,7 @@ PARTY_MISSING = "party_missing"
 MEMBER_MISSING = "member_missing"
 LAW_PROPOSAL = "law_proposals"
 ABSENT_STATS = "abesnt_stats"
+ALL = "All"
 
 def _getPartyEfficiancy(graph, party, laws):
     num_of_members = len(party.party_members)
@@ -127,7 +128,7 @@ def createGeneralStats(num_of_laws_backward):
             GeneralInfo.createGeneralInfo(graph=graph, type=absent_stats, raw_data=raw_data_absent)
 
 
-def getGeneralStats(graph, type, tag="All"):
+def getGeneralStats(graph, type, tag):
     node_type = f"{type}_{tag}"
     data = GeneralInfo.safeSelect(graph=graph, type=node_type).raw_data
     return data
