@@ -345,11 +345,11 @@ def main(args):
                 date = pargs.from_date.strftime('%d/%m/%Y')
             else:
                 date = now.strftime('%d/%m/%Y')-relativedelta.relativedelta(days=14)
-            if pargs.mail:
-                UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO, MAIL_CONSTANTS.MESSAGES.get_start_message(date))
+            # if pargs.mail:
+            #     UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO, MAIL_CONSTANTS.MESSAGES.get_start_message(date))
             logger.info("crawler started interation from {}".format(date))
             summary = add_votes_to_db(date)
-            if pargs.mail:
+            if pargs.mail and len(summary)>0:
                 UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO,
                                 MAIL_CONSTANTS.MESSAGES.get_summary_message(summary))
             logger.info("crawler finised iteration")
