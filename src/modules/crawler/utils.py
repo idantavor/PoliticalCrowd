@@ -1,6 +1,10 @@
 import requests
 import smtplib
 from constants import MAIL_RECIPIENTS
+from email.header import Header
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 class UTILS:
     @staticmethod
     def single_get_url(url,retries=3,cookies=None):
@@ -36,15 +40,20 @@ class UTILS:
     @staticmethod
     def send_mail(subject,_message,_from="bibi@gmail.com",_to=MAIL_RECIPIENTS):
         try:
-            message = """From: {}\nTo: {}\nSubject: {}\n\n{}
-            """.format(_from, ", ".join(_to), subject, _message)
+            msg = MIMEText(_message, _charset="UTF-8")
+            msg['Subject'] = Header(subject, "utf-8")
+            msg['To'] = ", ".join(_to)
+            msg['From'] = _from
             server = smtplib.SMTP("smtp.gmail.com", 587)
             server.ehlo()
             server.starttls()
             server.login("heimdalltau@gmail.com","bibikiller")
-            server.sendmail(_from, _to, message,)
+            server.sendmail(_from, _to, msg.as_string(),)
             server.close()
             print('successfully sent the mail')
         except Exception as e:
             print("failed to send mail")
             raise e
+
+
+UTILS.send_mail("blagan","שלום".encode('utf-8'))
