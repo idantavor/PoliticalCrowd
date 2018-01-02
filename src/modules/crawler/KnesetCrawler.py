@@ -299,6 +299,7 @@ def parse_args(args):
     parser.add_argument('--add_jobs', action='store_true', help="add job objects to db", default=False, dest="add_jobs")
     parser.add_argument('--add_residency', action='store_true', help="add residency objects to db", default=False,
                         dest="add_residency")
+    parser.add_argument('--run_base_queries', action='store_true', help="run basic queries for index addition and constains", default=False, dest="run_queries")
     parser.add_argument('--build_db', action='store_true', help="build db from scratch", default=False,
                         dest="build_db")
 
@@ -327,34 +328,37 @@ def main(args):
     if pargs.add_residency:
         Residency.add_residencies_to_db(graph, logger)
         exit(0)
+    if pargs.run_queries:
+        build_index_schemes(graph,logger)
+        exit(0)
     if pargs.build_db:
         build_index_schemes(graph,logger)
         JobCategory.add_jobs_to_db(graph,logger)
         Residency.add_residencies_to_db(graph,logger)
         add_parties_and_members_to_db()
         exit(0)
-        first_time = True
-        now = datetime.datetime.now()
-        while True:
-            try:
-                if first_time:
-                    date = pargs.from_date.strftime('%d/%m/%Y')
-                else:
-                    date = now.strftime('%d/%m/%Y')
-                if pargs.mail:
-                    UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO, MAIL_CONSTANTS.MESSAGES.get_start_message(date))
-                logger.info("crawler started interation from {}".format(date))
-                summary = add_votes_to_db(date)
-                if pargs.mail:
-                    UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO,
-                                    MAIL_CONSTANTS.MESSAGES.get_summary_message(summary))
-                logger.info("crawler finised iteration")
-                first_time = False
-                now = datetime.datetime.now()
-                time.sleep(60 * pargs.interval)
-            except KeyboardInterrupt as k:
-                logger.info("Crawler was stopped by Keyboard interrupt")
-            except Exception as e:
-                UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_ERROR, MAIL_CONSTANTS.MESSAGES.get_error_message(e))
-                logger.error('Crawler encountered an error :\n{}\\n{}'.format(e, traceback.print_exc()))
-                continue
+    first_time = True
+    now = datetime.datetime.now()
+    while True:
+        try:
+            if first_time:
+                date = pargs.from_date.strftime('%d/%m/%Y')
+            else:
+                date = now.strftime('%d/%m/%Y')-relativedelta.relativedelta(days=14)
+            # if pargs.mail:
+            #     UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO, MAIL_CONSTANTS.MESSAGES.get_start_message(date))
+            logger.info("crawler started interation from {}".format(date))
+            summary = add_votes_to_db(date)
+            if pargs.mail and len(summary)>0:
+                UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO,
+                                MAIL_CONSTANTS.MESSAGES.get_summary_message(summary))
+            logger.info("crawler finised iteration")
+            first_time = False
+            now = datetime.datetime.now()
+            time.sleep(60 * pargs.interval)
+        except KeyboardInterrupt as k:
+            logger.info("Crawler was stopped by Keyboard interrupt")
+        except Exception as e:
+            UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_ERROR, MAIL_CONSTANTS.MESSAGES.get_error_message(e))
+            logger.error('Crawler encountered an error :\n{}\\n{}'.format(e, traceback.print_exc()))
+            continue
