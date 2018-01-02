@@ -120,6 +120,8 @@ def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 1
             f"RETURN user_vote, l.name ORDER BY l.timestamp DESCENDING LIMIT {num_of_laws_backwards}"
 
     last_laws_voted = graph.run(query).data()
+    if not last_laws_voted:
+        return {}
     res = {}
     law_num = 0
     user = User.safeSelect(graph=graph, token=user_id)

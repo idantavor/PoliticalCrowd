@@ -120,6 +120,13 @@ class Tag(GraphObject):
     name = Property()
     laws = RelatedFrom("Law", TAGGED_AS)
 
+    @classmethod
+    def createTag(cls, graph,  name):
+        tag = cls()
+        tag.name = name
+        graph.begin(autocommit=True)
+        graph.push(tag)
+
     @staticmethod
     def safeSelect(graph, tag_name):
         try:
@@ -169,7 +176,7 @@ class Law(GraphObject):
 
     def tagLawByName(self, graph, tag_name):
         tagNode = Tag.safeSelect(graph=graph, tag_name=tag_name)
-        tags_as_dict = dict(self.tags_votes)
+        tags_as_dict = list(self.tags_votes)#TODO: was dict but cant keep count like this, dict not allowed
         if tag_name in tags_as_dict:
             tags_as_dict[tag_name] += 1
         else:
