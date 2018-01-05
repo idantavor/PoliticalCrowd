@@ -5,7 +5,7 @@ from google.oauth2 import id_token
 from src.modules.backend.bl import LawService, ProfileService, PartyService, UserService
 from src.modules.backend.common.APIConstants import *
 from src.modules.dal.GraphConnection import bolt_connect
-from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial, Law, Residency, JobCategory
+from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial, Law, Residency, JobCategory, Tag
 from werkzeug.contrib.cache import SimpleCache
 
 app = Flask(__name__)
@@ -77,6 +77,15 @@ def getJobCategories():
     app.logger.debug("returning " + str(job_categories_names))
     return job_categories_names
 
+def getTags():
+    app.logger.debug("got elected officials request")
+    tags = Tag.select(graph)
+    tag_names = []
+    for tag in tags:
+        tag_names.append(tag.name)
+    app.logger.debug("returning " + str(tag_names))
+    return tag_names
+
 
 @app.route("/getElectedOfficials", methods=['POST'])
 def getElectedOfficials():
@@ -96,7 +105,8 @@ def getCategoryNames():
     return jsonify({
         "parties":getParties(),
         "residencies": getResidencies(),
-        "job_categories": getJobCategories()
+        "job_categories": getJobCategories(),
+        "tags" : getTags()
     })
 
 # adding שמאל and ימין tags
