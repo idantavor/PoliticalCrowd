@@ -117,24 +117,23 @@ def absentFromVotes(graph, tag, num_of_laws_backward):
 
 def createGeneralStats(num_of_laws_backward):
     graph = bolt_connect()
-    file_path = os.path.join(pathlib.PurePath(__file__).parent, "Tags.txt")
-    with open(file_path, "r") as tags_file:
-        for tag_name in tags_file:
-            party_efficiency = f"{PARTY_EFFICIENCY}_{tag_name}"
-            law_proposals = f"{LAW_PROPOSAL}_{tag_name}"
-            absent_stats = f"{ABSENT_STATS}_{tag_name}"
+    for tag in Tag.select(graph=graph):
+        tag_name = tag.name
+        party_efficiency = f"{PARTY_EFFICIENCY}_{tag_name}"
+        law_proposals = f"{LAW_PROPOSAL}_{tag_name}"
+        absent_stats = f"{ABSENT_STATS}_{tag_name}"
 
-            if "All" in tag_name:
-                tag_name = None
+        if "כללי" in tag_name:
+            tag_name = None
 
-            raw_data_efficiency = json.dumps(getAllPartiesEfficiencyByTag(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
-            GeneralInfo.createGeneralInfo(graph=graph, type=party_efficiency, raw_data=raw_data_efficiency)
+        raw_data_efficiency = json.dumps(getAllPartiesEfficiencyByTag(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+        GeneralInfo.createGeneralInfo(graph=graph, type=party_efficiency, raw_data=raw_data_efficiency)
 
-            raw_data_proposals = json.dumps(getAllLawProposalPerParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
-            GeneralInfo.createGeneralInfo(graph=graph, type=law_proposals, raw_data=raw_data_proposals)
+        raw_data_proposals = json.dumps(getAllLawProposalPerParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+        GeneralInfo.createGeneralInfo(graph=graph, type=law_proposals, raw_data=raw_data_proposals)
 
-            raw_data_absent = json.dumps(absentFromVotes(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
-            GeneralInfo.createGeneralInfo(graph=graph, type=absent_stats, raw_data=raw_data_absent)
+        raw_data_absent = json.dumps(absentFromVotes(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+        GeneralInfo.createGeneralInfo(graph=graph, type=absent_stats, raw_data=raw_data_absent)
 
 
 def getGeneralStats(graph, type, tag):
