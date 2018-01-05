@@ -123,7 +123,7 @@ def createGeneralStats(num_of_laws_backward):
         law_proposals = f"{LAW_PROPOSAL}_{tag_name}"
         absent_stats = f"{ABSENT_STATS}_{tag_name}"
 
-        if "All" in tag_name:
+        if "כללי" in tag_name:
             tag_name = None
 
         raw_data_efficiency = json.dumps(getAllPartiesEfficiencyByTag(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
