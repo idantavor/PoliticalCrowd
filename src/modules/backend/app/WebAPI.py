@@ -190,18 +190,17 @@ def getUserDistribution():
     if LawService.validUserVotesForDist(graph, law_name):
         return jsonify(UserService.getUsersDistForLaw(graph, law_name))
     else:
-        return jsonify(UserService.getUsersDistForLaw(graph, law_name))
-        #return jsonify({})
+        return jsonify({})
 
 
 # Laws
 
 @app.route("/getLawsByDateInterval", methods=['POST'])
 def lawsByDateInterval():
-    getUsersId(request)
+    user_id = getUsersId(request)
     start_date = request.form.get(START_DATE)
     end_date = request.form.get(END_DATE)
-    return jsonify(LawService.getLawsByDateInterval(graph = graph, start_date = start_date, end_date = end_date))
+    return jsonify(LawService.getLawsByDateInterval(graph = graph, start_date = start_date, end_date = end_date, user_id=user_id))
 
 
 

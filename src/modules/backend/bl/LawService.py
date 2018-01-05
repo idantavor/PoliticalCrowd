@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 
 import logging
@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 def getLawTags(graph, law_name):
     law = Law.safeSelect(graph=graph, name=law_name)
-    tags = islice(sorted(law.tags_votes, key=lambda tup: tup[1], reverse=True), 2)
-    return [tag[0] for tag in tags]
+    tags = islice(sorted(list(json.loads(law.tags_votes).items()), key=lambda tup: tup[1], reverse=True), 2)
+    return [tag for tag, count in tags]
 
 
 def submitVoteAndTags(graph, law_name, tags, user_id, vote):
@@ -47,7 +47,12 @@ def getNewLaws(graph, user_id):
             datetime.fromtimestamp(time.time()).date().strftime("%d/%m/%Y"),
             "%d/%m/%Y")
         .timetuple())
-    new_laws = Law.select(graph).where(f"_.timestamp = {int(today_timestamp)}")
+    yesterday_timestamp = time.mktime(
+        datetime.strptime(
+            (datetime.fromtimestamp(time.time()) - timedelta(days=1)).date().strftime("%d/%m/%Y"),
+            "%d/%m/%Y")
+            .timetuple())
+    new_laws = Law.select(graph).where(f"{int(yesterday_timestamp)}<= _.timestamp <={int(today_timestamp)}")
     user = User.safeSelect(graph=graph ,token=user_id)
     inv = user.involvement_level
     res = []
@@ -129,16 +134,19 @@ def getNumOfLawsByTag(graph, tag, num_of_laws):
     return laws
 
 
-def getLawsByDateInterval(graph, start_date, end_date):
+def getLawsByDateInterval(graph, start_date, end_date, user_id):
     start_date = time.mktime(datetime.strptime(start_date, "%d/%m/%Y").timetuple())
     end_date = time.mktime(datetime.strptime(end_date, "%d/%m/%Y").timetuple())
     law_set = Law.select(graph)\
         .where("{}<= _.timestamp <={}".format(start_date, end_date))
     res = {}
+    user = User.safeSelect(graph, user_id)
     for law in law_set:
+        tags = getLawTags(graph, law.name)
         res[law.name] = {"link" : law.link,
-                         "description" : law.description}
-                         #"tags" : law.tags_votes} #TODO: change to top 2 tags
+                         "description" : law.description,
+                         "tags" : tags,
+                         "user_voted" : "for" if user in list(law.users_voted_for) else "against" if user in list(law.users_voted_againts) else "no_vote"}
     return res
 
 

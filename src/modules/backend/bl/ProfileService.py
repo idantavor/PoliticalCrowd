@@ -16,4 +16,4 @@ def updatePersonlInfo(graph, user_id, job, residency, party, involvement_level):
     updateExistingField(graph=graph, update_function=user.changeAssociateParty, new_value=party)
     if involvement_level is not None:
         involvement_level = InvolvementLevel[involvement_level]
-        updateExistingField(graph=graph, update_function=user.changeInvlovmentLevel, new_value=involvement_level)
+        updateExistingField(graph=graph, update_function=user.changeInvlovmentLevel, new_value=involvement_level.value)
