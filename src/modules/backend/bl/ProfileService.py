@@ -1,7 +1,7 @@
 import logging
 
-from modules.backend.common.APIConstants import InvolvementLevel
-from modules.dal.graphObjects.graphObjects import User
+from src.modules.backend.common.APIConstants import InvolvementLevel
+from src.modules.dal.graphObjects.graphObjects import User
 
 logger = logging.getLogger(__name__)
 

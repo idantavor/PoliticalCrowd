@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
 from google.auth.transport import requests
 from google.oauth2 import id_token
-
+import os,sys
+Base=os.path.join(os.path.abspath(__file__),'..','..','..','..','..')
+sys.path.append(os.path.abspath(Base))
 from src.modules.backend.bl import LawService, ProfileService, PartyService, UserService
 from src.modules.backend.common.APIConstants import *
 from src.modules.dal.GraphConnection import bolt_connect
@@ -263,4 +265,4 @@ def updatePersonalInfo():
     return jsonify("Success")
 
 
-app.run("127.0.0.1", 8080, debug=True)
+app.run("0.0.0.0", 80, debug=True)
