@@ -78,7 +78,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
                        f"AND ((u)-[:{VOTED_FOR}]->(l) OR (u)-[:{VOTED_AGAINST}]->(l)) " \
                        f"RETURN COUNT(DISTINCT (l))"
 
-    num_of_total = graph.run(query_total_laws).data()
+    num_of_total = int(list(graph.run(query_total_laws).data()[0].items())[0][1])
 
     query_same = f"MATCH (u:{User.__name__}), (e:{ElectedOfficial.__name__}), (l:{Law.__name__}), (v:{Vote.__name__}, (t:{Tag.__name__}) " \
                  f"WHERE u.token={user_id} AND e.name='{member_name}' {tag_match}" \
@@ -87,7 +87,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
                  f"((u)-[:{VOTED_AGAINST}]->(l) AND (v)-[:{ELECTED_VOTED_AGAINST}]->(e))) " \
                  f"RETURN COUNT(DISTINCT (l))"
 
-    num_of_same = graph.run(query_same).data()
+    num_of_same = int(list(graph.run(query_same).data()[0].items())[0][1])
 
     query_different = f"MATCH (u:{User.__name__}), (e:{ElectedOfficial.__name__}), (l:{Law.__name__}), (v:{Vote.__name__} " \
                       f"WHERE u.token={user_id} AND e.name='{member_name}' {tag_match}" \
@@ -96,7 +96,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
                       f"((u)-[:{VOTED_AGAINST}]->(l) AND (v)-[:{ELECTED_VOTED_FOR}]->(e))) " \
                       f"RETURN COUNT(DISTINCT (l))"
 
-    num_of_different = graph.run(query_different).data()
+    num_of_different = int(list(graph.run(query_different).data()[0].items())[0][1])
 
     query_member_absent = f"MATCH (u:{User.__name__}), (e:{ElectedOfficial.__name__}), (l:{Law.__name__}), (v:{Vote.__name__}, (t:{Tag.__name__}) " \
                           f"WHERE u.token={user_id} AND e.name='{member_name}' {tag_match}" \
@@ -105,7 +105,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
                           f"((u)-[:{VOTED_AGAINST}]->(l) AND (v)-[:{ELECTED_MISSING}]->(e))) " \
                           f"RETURN COUNT(DISTINCT (l))"
 
-    num_of_member_absent = graph.run(query_member_absent).data()
+    num_of_member_absent = int(list(graph.run(query_member_absent).data()[0].items())[0][1])
 
     match_dict = {SAME: num_of_same/num_of_total, DIFF: num_of_different/num_of_total, MEMBER_ABSENT: num_of_member_absent/num_of_total}
 

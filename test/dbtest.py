@@ -101,9 +101,9 @@ def relatedToQueries():
 
 
 graph = bolt_connect()
-
-for line in open("C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resources\\Tags.txt", mode="r", encoding="UTF-8"):
-    Tag.createTag(graph, line.strip())
+#
+# for line in open("C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resources\\Tags.txt", mode="r", encoding="UTF-8"):
+#     Tag.createTag(graph, line.strip())
 #a = graph.run("MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:ELECTED_VOTED_FOR]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name CONTAINS 'בריאות' return e, p.name")
 #o  = ElectedOfficial.select(graph,primary_value="דוד אזולאי")\
 #    .where("'{}' IN _.member_of_party".format('ש"ס'))
@@ -123,5 +123,7 @@ for line in open("C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resourc
 # graph.push(a)
 
 
+data = list(graph.run("MATCH (l:Law) RETURN COUNT(l)").data()[0].items())[0][1]
 
+print(data)
 
