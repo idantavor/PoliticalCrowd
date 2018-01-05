@@ -47,8 +47,8 @@ def getNewLaws(graph, user_id):
             datetime.fromtimestamp(time.time()).date().strftime("%d/%m/%Y"),
             "%d/%m/%Y")
         .timetuple())
-    new_laws = Law.select(graph).where(f"_timestamp = {today_timestamp}")
-    user = User.safeSelect(token=user_id)
+    new_laws = Law.select(graph).where(f"_.timestamp = {int(today_timestamp)}")
+    user = User.safeSelect(graph=graph ,token=user_id)
     inv = user.involvement_level
     res = []
     for law in new_laws:

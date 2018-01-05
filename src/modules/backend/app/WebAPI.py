@@ -230,7 +230,7 @@ def lawVoteSubmit():
     app.logger.info("recieved request for vote from ["+str(user_id)+"]")
     law_name = request.form.get(LAW_NAME)
     vote = request.form.get(VOTE)
-    tags = request.form.get(TAGS)
+    tags = request.form.get(TAGS).split(",")
 
     LawService.submitVoteAndTags(graph, law_name, tags, user_id, vote)
 
