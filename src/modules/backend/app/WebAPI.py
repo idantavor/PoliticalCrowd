@@ -179,7 +179,7 @@ def userPartiesVotesMatchByTag():
 def userToElectedOfficialMatchByTag():
     user_id = getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
-    elected_official = ElectedOfficial.safeSelect(validElectedOfficial(request.form.get(ELECTED_OFFICIAL)))
+    elected_official = validElectedOfficial(request.form.get(ELECTED_OFFICIAL))
     return jsonify(
         UserService.getUserMatchForOfficial(graph=graph, user_id=user_id, member_name=elected_official, tag=tag))
 
