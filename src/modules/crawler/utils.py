@@ -54,6 +54,3 @@ class UTILS:
         except Exception as e:
             print("failed to send mail")
             raise e
-
-
-UTILS.send_mail("blagan","שלום".encode('utf-8'))

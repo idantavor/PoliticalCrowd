@@ -344,7 +344,8 @@ def main(args):
             if first_time:
                 date = pargs.from_date.strftime('%d/%m/%Y')
             else:
-                date = now.strftime('%d/%m/%Y')-relativedelta.relativedelta(days=14)
+                date_obj = now-relativedelta.relativedelta(days=14)
+                date=date_obj.strftime('%d/%m/%Y')
             # if pargs.mail:
             #     UTILS.send_mail(MAIL_CONSTANTS.SUBJECTS.CRAWLER_INFO, MAIL_CONSTANTS.MESSAGES.get_start_message(date))
             logger.info("crawler started interation from {}".format(date))

@@ -176,7 +176,7 @@ class Law(GraphObject):
 
     def tagLawByName(self, graph, tag_name):
         tagNode = Tag.safeSelect(graph=graph, tag_name=tag_name)
-        tags_as_dict = list(self.tags_votes)#TODO: was dict but cant keep count like this, dict not allowed
+        tags_as_dict = dict(list(self.tags_votes))
         if tag_name in tags_as_dict:
             tags_as_dict[tag_name] += 1
         else:
