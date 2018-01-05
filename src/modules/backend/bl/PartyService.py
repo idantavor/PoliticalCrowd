@@ -118,13 +118,14 @@ def absentFromVotes(graph, tag, num_of_laws_backward):
 def createGeneralStats(num_of_laws_backward):
     graph = bolt_connect()
     for tag in Tag.select(graph=graph):
-        tag_name = tag.name
-        party_efficiency = f"{PARTY_EFFICIENCY}_{tag_name}"
-        law_proposals = f"{LAW_PROPOSAL}_{tag_name}"
-        absent_stats = f"{ABSENT_STATS}_{tag_name}"
+        tag_name = tag.name.strip()
 
         if "כללי" in tag_name:
             tag_name = None
+
+        party_efficiency = f"{PARTY_EFFICIENCY}_{tag_name}"
+        law_proposals = f"{LAW_PROPOSAL}_{tag_name}"
+        absent_stats = f"{ABSENT_STATS}_{tag_name}"
 
         raw_data_efficiency = json.dumps(getAllPartiesEfficiencyByTag(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
         GeneralInfo.createGeneralInfo(graph=graph, type=party_efficiency, raw_data=raw_data_efficiency)
@@ -137,7 +138,7 @@ def createGeneralStats(num_of_laws_backward):
 
 
 def getGeneralStats(graph, type, tag):
-    node_type = f"{type}_{tag}"
+    node_type = f"{type}_{tag.strip()}"
     data = json.loads(GeneralInfo.safeSelect(graph=graph, type=node_type).raw_data)
     return data
 
