@@ -1,4 +1,5 @@
 import datetime
+import json
 import time
 from os import system
 
@@ -102,8 +103,11 @@ def relatedToQueries():
 
 graph = bolt_connect()
 
-for line in open("C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resources\\Tags.txt", mode="r", encoding="UTF-8"):
-    Tag.createTag(graph, line.strip())
+# for line in open("C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resources\\Tags.txt", mode="r", encoding="UTF-8"):
+#     Tag.createTag(graph, line.strip())
+for law in Law.select(graph):
+    law.tags_votes=json.dumps(dict())
+    graph.push(law)
 #a = graph.run("MATCH(l:Law) MATCH(v:Vote) MATCH(e:ElectedOfficial) MATCH(p:Party) WHERE (v)-[:LAW]->(l) AND (v)-[:ELECTED_VOTED_FOR]->(e) AND (e)-[:MEMBER_OF_PARTY]->(p) AND l.name CONTAINS 'בריאות' return e, p.name")
 #o  = ElectedOfficial.select(graph,primary_value="דוד אזולאי")\
 #    .where("'{}' IN _.member_of_party".format('ש"ס'))
