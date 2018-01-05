@@ -116,7 +116,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
 def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 100):
 
     query = f"MATCH(u:{User.__name__})-[user_vote]->(l:{Law.__name__}){'' if tag is None else '<-[:{}]-(t:{})'.format(TAGGED_AS, Tag.__name__)} " \
-            f"WHERE u.token={user_id}{'' if tag is None else ' AND t.name={}'.format(tag)} " \
+            f"WHERE u.token='{user_id}'{'' if tag is None else ' AND t.name={}'.format(tag)} " \
             f"RETURN user_vote, l.name ORDER BY l.timestamp DESCENDING LIMIT {num_of_laws_backwards}"
 
     last_laws_voted = graph.run(query).data()
@@ -127,17 +127,19 @@ def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 1
     user = User.safeSelect(graph=graph, token=user_id)
     user_party = list(user.associate_party)[0].name
     for selection in last_laws_voted:
-        law_votes = LawService._getElectedOfficialLawStats(graph=graph, law_name=selection["l.name"], user_party=user_party,user_vote=selection["user_vote"])
-        for party, info in law_votes:
+        if selection["user_vote"]._Relationship__type == TAGGED_AS:
+            continue
+        law_votes = LawService._getElectedOfficialLawStats(graph=graph, law_name=selection["l.name"], user_party=user_party,user_vote=selection["user_vote"]._Relationship__type)
+        for party, info in law_votes.items():
             if res.get(party) is None:
                 res[party] = {"match" : info["match"],
                               "is_users_party" : info["is_users_party"]}
             else:
                 res[party]["match"] += info["match"]
-            law_num += 1
-    for party, match_count in res:
-        res[party] = {"match" :(res[party] / law_num),
-                      "is_users_party" : res[party]["is_users_party"]}
+        law_num += 1
+    for party, match in res.items():
+        res[party] = {"match" :(match["match"] / law_num),
+                      "is_users_party" : match["is_users_party"]}
 
     return res
 
