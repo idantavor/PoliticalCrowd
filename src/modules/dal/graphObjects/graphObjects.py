@@ -162,7 +162,7 @@ class Law(GraphObject):
         law.status = status
         law.description = description
         law.link = link
-        law.tags_votes = []
+        law.tags_votes = json.dumps(dict())
         return law
 
     @staticmethod
@@ -176,14 +176,14 @@ class Law(GraphObject):
 
     def tagLawByName(self, graph, tag_name):
         tagNode = Tag.safeSelect(graph=graph, tag_name=tag_name)
-        tags_as_dict = dict(list(self.tags_votes))
+        tags_as_dict = json.loads(self.tags_votes)
         if tag_name in tags_as_dict:
             tags_as_dict[tag_name] += 1
         else:
             self.tagged_as.add(tagNode)
             tags_as_dict[tag_name] = 1
 
-        self.tags_votes = list(tags_as_dict.items())
+        self.tags_votes = json.dumps(tags_as_dict)
 
         graph.begin(autocommit=True)
         graph.push(self)

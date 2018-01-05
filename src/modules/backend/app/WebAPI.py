@@ -14,7 +14,7 @@ app.secret_key = "ThisIsNotThePassword"
 graph = bolt_connect()
 auth_cache = SimpleCache()
 
-@app.errorhandler(Exception)
+@app.errorhandler(Exception)    
 def defaultHandler(error):
     app.logger.error(str(error))
     return Response.FAILED, Response.CODE_FAILED
