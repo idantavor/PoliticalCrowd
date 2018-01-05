@@ -17,23 +17,23 @@ def isUserExist(graph, user_token):
 
 def getUserAge(user_node):
     curr_year = datetime.datetime.now().year
-    return curr_year - user_node.birth_year
+    return curr_year - int(user_node.birth_year)
 
 
 def getUserAgeRange(user_node):
     user_age = getUserAge(user_node)
-    if user_age < AgeRange.Second:
-        begin = str(AgeRange.First)
-        end = str(AgeRange.Second)
-    elif user_age < AgeRange.Third:
-        begin = str(AgeRange.Second)
-        end = str(AgeRange.Third)
-    elif user_age < AgeRange.Fourth:
-        begin = str(AgeRange.Third)
-        end = str(AgeRange.Fourth)
-    elif user_age < AgeRange.Fifth:
-        begin = str(AgeRange.Fourth)
-        end = str(AgeRange.Fifth)
+    if user_age < AgeRange.Second.value:
+        begin = str(AgeRange.First.value)
+        end = str(AgeRange.Second.value)
+    elif user_age < AgeRange.Third.value:
+        begin = str(AgeRange.Second.value)
+        end = str(AgeRange.Third.value)
+    elif user_age < AgeRange.Fourth.value:
+        begin = str(AgeRange.Third.value)
+        end = str(AgeRange.Fourth.value)
+    elif user_age < AgeRange.Fifth.value:
+        begin = str(AgeRange.Fourth.value)
+        end = str(AgeRange.Fifth.value)
     else:
         begin = str(AgeRange.Fifth)
         end = ""
@@ -48,14 +48,14 @@ def getUsersDistForLaw(graph, law_name):
     num_of_voters = len(voted_for) + len(voted_againts)
 
     job_for_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
-                      groupby(sorted(voted_for, key=lambda user: user.work_at.name), key=lambda user: user.work_at.name)}
+                      groupby(sorted(voted_for, key=lambda user: list(user.work_at)[0].name), key=lambda user: list(user.work_at)[0].name)}
     job_againts_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
-                          groupby(sorted(voted_againts, key=lambda user: user.work_at.name), key=lambda user: user.work_at.name)}
+                          groupby(sorted(voted_againts, key=lambda user: list(user.work_at)[0].name), key=lambda user: list(user.work_at)[0].name)}
 
     resident_for_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
-                           groupby(sorted(voted_for, key=lambda user: user.residing.name), key=lambda user: user.residing.name)}
+                           groupby(sorted(voted_for, key=lambda user: list(user.residing)[0].name), key=lambda user: list(user.residing)[0].name)}
     resident_againts_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
-                               groupby(sorted(voted_againts, key=lambda user: user.residing.name), key=lambda user: user.residing.name)}
+                               groupby(sorted(voted_againts, key=lambda user: list(user.residing)[0].name), key=lambda user: list(user.residing)[0].name)}
 
     age_range_for_groups = {key: (len(list(group))/float(num_of_voters)) for key, group in
                             groupby(sorted(voted_for, key=lambda user: getUserAgeRange(user)), key=lambda user: getUserAgeRange(user))}
@@ -66,7 +66,7 @@ def getUsersDistForLaw(graph, law_name):
                     RESIDENT_FOR: resident_for_groups, RESIDENT_AGAINST: resident_againts_groups,
                     AGE_FOR: age_range_for_groups, AGE_AGAINST: age_range_againts_groups}
 
-    return jsonify(distribution)
+    return distribution
 
 
 def getUserMatchForOfficial(graph, user_id, member_name, tag=None):

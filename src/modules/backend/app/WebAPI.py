@@ -183,6 +183,17 @@ def userToElectedOfficialMatchByTag():
     return jsonify(
         UserService.getUserMatchForOfficial(graph=graph, user_id=user_id, member_name=elected_official, tag=tag))
 
+@app.route("/getUserDistribution", methods=['POST'])
+def getUserDistribution():
+    user_id = getUsersId(request)
+    law_name = request.form.get(LAW_NAME)
+    if LawService.validUserVotesForDist(graph, law_name):
+        return jsonify(UserService.getUsersDistForLaw(graph, law_name))
+    else:
+        return jsonify(UserService.getUsersDistForLaw(graph, law_name))
+        #return jsonify({})
+
+
 # Laws
 
 @app.route("/getLawsByDateInterval", methods=['POST'])
