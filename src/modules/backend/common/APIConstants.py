@@ -46,7 +46,7 @@ class Response(Enum):
 class Rank(Enum):
     First = "תייר"
     Second = "אזרח"
-    Fourth = "חבר עירייה"
+    Fourth = "עסקן"
     Fifth = "ראש עיר"
     Third = "חבר כנסת"
     Sixth = "לוביסט"
