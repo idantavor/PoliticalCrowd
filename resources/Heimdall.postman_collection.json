@@ -1,0 +1,533 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Heimdall",
+		"_postman_id": "b4abfa4d-9699-3bdc-d146-a0b23e365f04",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Profile",
+			"description": "",
+			"item": [
+				{
+					"name": "Profile localhost:8080/register",
+					"request": {
+						"url": "localhost:8080/register",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "birth_year",
+									"value": "1975",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "job",
+									"value": "אבטחת מידע",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "residency",
+									"value": "תל אביב -יפו",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "party",
+									"value": "יש עתיד",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "involvement_level",
+									"value": "LOW",
+									"type": "text",
+									"description": ""
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Profile localhost:8080/lawVoteSubmit",
+					"request": {
+						"url": "localhost:8080/lawVoteSubmit",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "law_name",
+									"value": " הצעת חוק לעידוד השקעות הון ",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "vote",
+									"value": "VOTED_FOR",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "user_token",
+									"value": "10",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "חיי אדם",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Profile localhost:8080/updatePersonalInfo",
+					"request": {
+						"url": "localhost:8080/updatePersonalInfo",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "job",
+									"value": "אדמיניסטרציה",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "residency",
+									"value": "תמרת",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "party",
+									"value": "הליכוד",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "involvement_level",
+									"value": "MEDIUM",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Profile localhost:8080/getUserRank",
+					"request": {
+						"url": "localhost:8080/getUserRank",
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"description": ""
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "דת",
+									"description": "",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Profile localhost:8080/lawNotification",
+					"request": {
+						"url": "localhost:8080/lawNotification",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "",
+									"value": "",
+									"description": "",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Personal",
+			"description": "",
+			"item": [
+				{
+					"name": "Personal localhost:8080/getUserDistribution",
+					"request": {
+						"url": "localhost:8080/getUserDistribution",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "law_name",
+									"value": " הצעת חוק לעידוד השקעות הון ",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Personal localhost:8080/getUserToElectedOfficialMatchByTag",
+					"request": {
+						"url": "localhost:8080/getUserToElectedOfficialMatchByTag",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "elected_official",
+									"value": "יאיר לפיד",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "דת",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Personal localhost:8080/getUserPartiesVotesMatchByTag",
+					"request": {
+						"url": "localhost:8080/getUserPartiesVotesMatchByTag",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Laws",
+			"description": "",
+			"item": [
+				{
+					"name": "Laws localhost:8080/getLawsByDateInterval",
+					"request": {
+						"url": "localhost:8080/getLawsByDateInterval",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "start_date",
+									"value": "20/12/2017",
+									"description": "",
+									"type": "text"
+								},
+								{
+									"key": "end_date",
+									"value": "22/12/2017",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "General",
+			"description": "",
+			"item": [
+				{
+					"name": "General localhost:8080/getAllAbsentFromVotes",
+					"request": {
+						"url": "localhost:8080/getAllAbsentFromVotes",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "123",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "General localhost:8080/getAllPartiesEfficiency",
+					"request": {
+						"url": "localhost:8080/getAllPartiesEfficiencyByTag",
+						"method": "POST",
+						"header": [
+							{
+								"key": "user_token",
+								"value": "10",
+								"description": "",
+								"disabled": true
+							},
+							{
+								"key": "tags",
+								"value": "דת",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "דת",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "General localhost:8080/getElectedOfficials",
+					"request": {
+						"url": "localhost:8080/getElectedOfficials",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "General localhost:8080/getCategoryNames",
+					"request": {
+						"url": "localhost:8080/getCategoryNames",
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"description": "",
+									"type": "text"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "General localhost:8080/getAllLawProposalsByTag",
+					"request": {
+						"url": "localhost:8080/getAllLawProposalsByTag",
+						"method": "POST",
+						"header": [
+							{
+								"key": "user_token",
+								"value": "10",
+								"description": "",
+								"disabled": true
+							},
+							{
+								"key": "tags",
+								"value": "דת",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "דת",
+									"description": "",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "General localhost:8080/getAllAbsentFromVotesByTag",
+					"request": {
+						"url": "localhost:8080/getAllAbsentFromVotesByTag",
+						"method": "POST",
+						"header": [
+							{
+								"key": "user_token",
+								"value": "10",
+								"description": "",
+								"disabled": true
+							},
+							{
+								"key": "tags",
+								"value": "דת",
+								"description": "",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_token",
+									"value": "10",
+									"type": "text"
+								},
+								{
+									"key": "tags",
+									"value": "דת",
+									"description": "",
+									"type": "text",
+									"disabled": true
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
