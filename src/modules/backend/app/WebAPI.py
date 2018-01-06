@@ -106,7 +106,12 @@ def getCategoryNames():
         "tags" : getTags()
     })
 
-# adding שמאל and ימין tags
+@app.route("/isRegistered", methods=['POST'])
+def isRegistered():
+    app.logger.debug("got connection query")
+    user_id = getUsersId(request)
+    return jsonify('Success' if UserService.isUserExist(graph, user_id) else 'Failed')
+
 
 @app.route("/register", methods=['POST'])
 def register():
