@@ -44,13 +44,13 @@ class Response(Enum):
 
 
 class Rank(Enum):
-    First = "תייר"
-    Second = "אזרח"
-    Fourth = "עסקן"
-    Fifth = "ראש עיר"
-    Third = "חבר כנסת"
-    Sixth = "לוביסט"
-    Seventh = "טייקון"
+    First = "1"
+    Second = "2"
+    Fourth = "3"
+    Fifth = "4"
+    Third = "5"
+    Sixth = "6"
+    Seventh = "7"
 
 
 class AgeRange(Enum):
