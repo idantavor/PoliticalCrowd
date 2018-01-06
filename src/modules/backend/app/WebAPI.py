@@ -14,34 +14,29 @@ app.secret_key = "ThisIsNotThePassword"
 graph = bolt_connect()
 auth_cache = SimpleCache()
 
+
 @app.errorhandler(Exception)    
 def defaultHandler(error):
     app.logger.error(str(error))
     return Response.FAILED, Response.CODE_FAILED
 
+
 def authenticate(token):
-    #temporary
-    return token
-
     try:
-        if auth_cache.get(token) is not None and not auth_cache(token):
+        if auth_cache.get(token) is not None and not auth_cache.get(token):
             raise ValueError('Illeagal Token')
-        idinfo = id_token.verify_firebase_token(token, requests.Request())
 
-        # need to validate request came from our app
-        # Or, if multiple clients access the backend server:
-        # idinfo = id_token.verify_oauth2_token(token, requests.Request())
-        # if idinfo['aud'] not in [CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]:
+        id_info = id_token.verify_firebase_token(token, requests.Request())
 
-        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
-            raise ValueError('Wrong issuer.')
+        if id_info['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+            raise ValueError(f"Can't verify token: {token}")
+        # ID token is valid. Get the user's Google Account ID from the decoded token.
+        user_id = id_info['sub']
+        return user_id
 
-        return idinfo['sub']
-    except ValueError:
-        # Invalid token
-        app.logger.error("Invalid Token recieved")
+    except ValueError as e:
         auth_cache.set(token, False, timeout=15 * 60)
-        pass
+        raise e
 
 
 def getUsersId(request):
@@ -135,7 +130,6 @@ def register():
     return jsonify("Success")
 
 
-
 # General Statistics
 
 def extractTags(tag):
@@ -143,11 +137,13 @@ def extractTags(tag):
         return None
     return tag
 
+
 @app.route("/getAllPartiesEfficiencyByTag", methods=['POST'])
 def allPartiesEfficiencyByTag():
     getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.PARTY_EFFICIENCY))
+
 
 @app.route("/getAllLawProposalsByTag", methods=['POST'])
 def allLawProposalsByTag():
@@ -155,11 +151,18 @@ def allLawProposalsByTag():
     tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.LAW_PROPOSAL))
 
+
 @app.route("/getAllAbsentFromVotesByTag", methods=['POST'])
 def allAbsentFromVotesByTag():
     getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.ABSENT_STATS))
+
+
+@app.route("/getUserAssociatedParty", methods=['POST'])
+def getUserassociatedParty():
+    user_id = getUsersId(request)
+    return jsonify({"user_party": UserService.getUserParty(graph=graph, user_id=user_id)})
 
 
 # Personal Statistics
