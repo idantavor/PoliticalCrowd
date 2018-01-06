@@ -130,7 +130,6 @@ def register():
     return jsonify("Success")
 
 
-
 # General Statistics
 
 def extractTags(tag):
@@ -138,11 +137,13 @@ def extractTags(tag):
         return None
     return tag
 
+
 @app.route("/getAllPartiesEfficiencyByTag", methods=['POST'])
 def allPartiesEfficiencyByTag():
     getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.PARTY_EFFICIENCY))
+
 
 @app.route("/getAllLawProposalsByTag", methods=['POST'])
 def allLawProposalsByTag():
@@ -150,11 +151,18 @@ def allLawProposalsByTag():
     tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.LAW_PROPOSAL))
 
+
 @app.route("/getAllAbsentFromVotesByTag", methods=['POST'])
 def allAbsentFromVotesByTag():
     getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.ABSENT_STATS))
+
+
+@app.route("/getUserAssociatedParty", methods=['POST'])
+def getUserassociatedParty():
+    user_id = getUsersId(request)
+    return jsonify({"user_party": UserService.getUserParty(graph=graph, user_id=user_id)})
 
 
 # Personal Statistics

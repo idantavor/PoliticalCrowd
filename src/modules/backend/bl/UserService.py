@@ -20,6 +20,11 @@ def getUserAge(user_node):
     return curr_year - int(user_node.birth_year)
 
 
+def getUserParty(graph, user_id):
+    user = User.safeSelect(graph=graph, token=user_id)
+    return list(user.associate_party)[0].name
+
+
 def getUserAgeRange(user_node):
     user_age = getUserAge(user_node)
     if user_age < AgeRange.Second.value:
