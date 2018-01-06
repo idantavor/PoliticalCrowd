@@ -1,4 +1,4 @@
-from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler
 
 import logging
 from flask import Flask, request, jsonify
@@ -28,6 +28,7 @@ def defaultHandler(error):
 
 
 def authenticate(token):
+    return token
     try:
         if auth_cache.get(token) is not None and not auth_cache.get(token):
             raise ValueError('Illeagal Token')
@@ -49,6 +50,11 @@ def getUsersId(request):
     user_token = request.form.get(USER_TOKEN)
     return authenticate(user_token)
 
+@app.before_request
+def log_request_info():
+    app.logger.debug('---------------------------------------------------------------------')
+    app.logger.debug('Headers: %s', request.headers)
+    app.logger.debug('Body: %s', request.get_data())
 
 # api functions for first time login -- begin
 
@@ -152,6 +158,7 @@ def extractTags(tag):
 
 @app.route("/getAllPartiesEfficiencyByTag", methods=['POST'])
 def allPartiesEfficiencyByTag():
+    app.logger.debug("got getAllPartiesEfficiencyByTag request")
     getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.PARTY_EFFICIENCY))
@@ -159,6 +166,7 @@ def allPartiesEfficiencyByTag():
 
 @app.route("/getAllLawProposalsByTag", methods=['POST'])
 def allLawProposalsByTag():
+    app.logger.debug("got getAllLawProposalsByTag request")
     getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.LAW_PROPOSAL))
@@ -166,6 +174,7 @@ def allLawProposalsByTag():
 
 @app.route("/getAllAbsentFromVotesByTag", methods=['POST'])
 def allAbsentFromVotesByTag():
+    app.logger.debug("got getAllAbsentFromVotesByTag request")
     getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.ABSENT_STATS))
@@ -173,6 +182,7 @@ def allAbsentFromVotesByTag():
 
 @app.route("/getUserAssociatedParty", methods=['POST'])
 def getUserassociatedParty():
+    app.logger.debug("got getUserAssociatedParty request")
     user_id = getUsersId(request)
     return jsonify({"user_party": UserService.getUserParty(graph=graph, user_id=user_id)})
 
@@ -193,6 +203,7 @@ def validElectedOfficial(elected_official):
 
 @app.route("/getUserPartiesVotesMatchByTag", methods=['POST'])
 def userPartiesVotesMatchByTag():
+    app.logger.debug("got getUserPartiesVotesMatchByTag request")
     user_id = getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
     return jsonify(UserService.getUserPartiesVotesMatchByTag(graph=graph, user_id=user_id, tag=tag))
@@ -200,6 +211,7 @@ def userPartiesVotesMatchByTag():
 
 @app.route("/getUserToElectedOfficialMatchByTag", methods=['POST'])
 def userToElectedOfficialMatchByTag():
+    app.logger.debug("got getUserToElectedOfficialMatchByTag request")
     user_id = getUsersId(request)
     tag = extractTags(request.form.get(TAGS))
     elected_official = validElectedOfficial(request.form.get(ELECTED_OFFICIAL))
@@ -209,6 +221,7 @@ def userToElectedOfficialMatchByTag():
 
 @app.route("/getUserDistribution", methods=['POST'])
 def getUserDistribution():
+    app.logger.debug("got getUserDistribution request")
     user_id = getUsersId(request)
     law_name = request.form.get(LAW_NAME)
     if LawService.validUserVotesForDist(graph, law_name):
@@ -221,6 +234,7 @@ def getUserDistribution():
 
 @app.route("/getLawsByDateInterval", methods=['POST'])
 def lawsByDateInterval():
+    app.logger.debug("got getLawsByDateInterval request")
     user_id = getUsersId(request)
     start_date = request.form.get(START_DATE)
     end_date = request.form.get(END_DATE)
@@ -230,6 +244,7 @@ def lawsByDateInterval():
 
 @app.route("/lawNotification", methods=['POST'])
 def lawNotification():
+    app.logger.debug("got lawNotification request")
     app.logger.info("law notification request recieved")
     user_id = getUsersId(request)
     return jsonify(LawService.getNewLaws(graph=graph, user_id=user_id))
@@ -239,6 +254,7 @@ def lawNotification():
 
 @app.route("/lawVoteSubmit", methods=['POST'])
 def lawVoteSubmit():
+    app.logger.debug("got lawVoteSubmit request")
     user_id = getUsersId(request)
     app.logger.info("recieved request for vote from [" + str(user_id) + "]")
     law_name = request.form.get(LAW_NAME)
@@ -256,12 +272,14 @@ def lawVoteSubmit():
 
 @app.route("/getUserRank", methods=['POST'])
 def getUserRank():
+    app.logger.debug("got getUserRank request")
     user_id = getUsersId(request)
     return jsonify({"user_rank": User.safeSelect(graph, user_id).rank})
 
 
 @app.route("/updatePersonalInfo", methods=['POST'])
 def updatePersonalInfo():
+    app.logger.debug("got updatePersonalInfo request")
     user_id = getUsersId(request)
     app.logger.info("recieved request to update presonal info from [" + str(user_id) + "]")
     job = request.form.get(JOB)
@@ -274,7 +292,7 @@ def updatePersonalInfo():
 
 
 if __name__ == "__main__":
-    handler = TimedRotatingFileHandler('/home/i_tavor/logs/heimdall.log', when='midnight', backupCount=5)
-    handler.setLevel(logging.INFO)
+    handler = TimedRotatingFileHandler('heimdall.log', when='midnight', backupCount=5)
+    handler.setLevel(logging.DEBUG)
     app.logger.addHandler(handler)
     app.run("127.0.0.1", 8080, debug=True)
