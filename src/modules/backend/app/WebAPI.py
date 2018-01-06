@@ -135,46 +135,27 @@ def register():
 
 # General Statistics
 
-def validTags(tag):
+def extractTags(tag):
     if tag is None:
-        raise Exception("Missing tags")
-
-
+        return None
     return tag
-
-
-@app.route("/getAllPartiesEfficiency", methods=['POST'])
-def allPartiesEfficiency():
-    getUsersId(request)
-    return jsonify(PartyService.getGeneralStats(graph = graph, tag=PartyService.ALL,type=PartyService.PARTY_EFFICIENCY))
-
 
 @app.route("/getAllPartiesEfficiencyByTag", methods=['POST'])
 def allPartiesEfficiencyByTag():
     getUsersId(request)
-    tag = validTags(request.form.get(TAGS))
+    tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.PARTY_EFFICIENCY))
-
-@app.route("/getAllLawProposals", methods=['POST'])
-def allLawProposals():
-    getUsersId(request)
-    return jsonify(PartyService.getGeneralStats(graph=graph, tag=PartyService.ALL, type=PartyService.LAW_PROPOSAL))
 
 @app.route("/getAllLawProposalsByTag", methods=['POST'])
 def allLawProposalsByTag():
     getUsersId(request)
-    tag = validTags(request.form.get(TAGS))
+    tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph = graph, tag=tag, type=PartyService.LAW_PROPOSAL))
-
-@app.route("/getAllAbsentFromVotes", methods=['POST'])
-def allAbsentFromVotes():
-    getUsersId(request)
-    return jsonify(PartyService.getGeneralStats(graph = graph, tag=PartyService.ALL, type=PartyService.ABSENT_STATS))
 
 @app.route("/getAllAbsentFromVotesByTag", methods=['POST'])
 def allAbsentFromVotesByTag():
     getUsersId(request)
-    tag = validTags(request.form.get(TAGS))
+    tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.ABSENT_STATS))
 
 
@@ -190,41 +171,38 @@ def validElectedOfficial(elected_official):
         raise Exception("Missing elected_official")
     return elected_official
 
-
-@app.route("/getUserPartiesVotesMatch", methods=['POST'])
-def usersPartyMatch():
-    user_id = getUsersId(request)
-    return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user_id=user_id, tag=None))
-
 @app.route("/getUserPartiesVotesMatchByTag", methods=['POST'])
 def userPartiesVotesMatchByTag():
     user_id = getUsersId(request)
-    tag = validTags(request.form.get(TAGS))
+    tag = extractTags(request.form.get(TAGS))
     return jsonify(UserService.getUserPartiesVotesMatchByTag(graph = graph, user_id=user_id, tag=tag))
-
-
-@app.route("/getUserToElectedOfficialMatch", methods=['POST'])
-def userToElectedOfficialMatch():
-    user_id = getUsersId(request)
-    elected_official = ElectedOfficial.safeSelect(validElectedOfficial(request.form.get(ELECTED_OFFICIAL)))
-    return jsonify(UserService.getUserMatchForOfficial(graph=graph, user_id=user_id, member_name=elected_official, tag=None))
 
 @app.route("/getUserToElectedOfficialMatchByTag", methods=['POST'])
 def userToElectedOfficialMatchByTag():
     user_id = getUsersId(request)
-    tag = validTags(request.form.get(TAGS))
-    elected_official = ElectedOfficial.safeSelect(validElectedOfficial(request.form.get(ELECTED_OFFICIAL)))
+    tag = extractTags(request.form.get(TAGS))
+    elected_official = validElectedOfficial(request.form.get(ELECTED_OFFICIAL))
     return jsonify(
         UserService.getUserMatchForOfficial(graph=graph, user_id=user_id, member_name=elected_official, tag=tag))
+
+@app.route("/getUserDistribution", methods=['POST'])
+def getUserDistribution():
+    user_id = getUsersId(request)
+    law_name = request.form.get(LAW_NAME)
+    if LawService.validUserVotesForDist(graph, law_name):
+        return jsonify(UserService.getUsersDistForLaw(graph, law_name))
+    else:
+        return jsonify({})
+
 
 # Laws
 
 @app.route("/getLawsByDateInterval", methods=['POST'])
 def lawsByDateInterval():
-    getUsersId(request)
+    user_id = getUsersId(request)
     start_date = request.form.get(START_DATE)
     end_date = request.form.get(END_DATE)
-    return jsonify(LawService.getLawsByDateInterval(graph = graph, start_date = start_date, end_date = end_date))
+    return jsonify(LawService.getLawsByDateInterval(graph = graph, start_date = start_date, end_date = end_date, user_id=user_id))
 
 
 
@@ -252,6 +230,11 @@ def lawVoteSubmit():
 
 
 #Profile
+
+@app.route("/getUserRank", methods=['POST'])
+def getUserRank():
+    user_id = getUsersId(request)
+    return jsonify({"user_rank" : User.safeSelect(graph, user_id).rank})
 
 @app.route("/updatePersonalInfo", methods=['POST'])
 def updatePersonalInfo():

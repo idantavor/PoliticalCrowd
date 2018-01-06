@@ -169,6 +169,8 @@ class Law(GraphObject):
     def safeSelect(graph, name):
         try:
             law = Law.select(graph=graph, primary_value=name).first()
+            if law is None:
+                raise Exception("No law by name:{}".format(name))
         except:
             raise Exception("No law by name:{}".format(name))
 
