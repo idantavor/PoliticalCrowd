@@ -47,7 +47,9 @@ def authenticate(token):
 
 
 def getParamsFromJsonRequest(request, param_name):
+    print("param name : "+param_name)
     req_data = request.get_json(force=True)
+    print(req_data)
     if param_name in req_data:
         return req_data[param_name]
     return None
