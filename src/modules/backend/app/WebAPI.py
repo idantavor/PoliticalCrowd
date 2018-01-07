@@ -226,15 +226,20 @@ def userToElectedOfficialMatchByTag():
         UserService.getUserMatchForOfficial(graph=graph, user_id=user_id, member_name=elected_official, tag=tag))
 
 
-@app.route("/getUserDistribution", methods=['POST'])
+@app.route("/getUserDistribution", methods=['POST']) # TODO check correctness
 def getUserDistribution():
     app.logger.debug("got getUserDistribution request")
     user_id = getUsersId(request)
     law_name = getParamsFromJsonRequest(request, LAW_NAME)
+    user_personal_details = UserService.getPersonalDetails(graph=graph, user_id=user_id)
+    distribution = dict()
+
     if LawService.validUserVotesForDist(graph, law_name):
-        return jsonify(UserService.getUsersDistForLaw(graph, law_name))
-    else:
-        return jsonify({})
+        distribution = UserService.getUsersDistForLaw(graph, law_name)
+
+    distribution.update({"user_info": user_personal_details})
+
+    return jsonify(distribution)
 
 # Laws
 
