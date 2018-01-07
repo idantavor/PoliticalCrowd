@@ -300,4 +300,4 @@ if __name__ == "__main__":
     handler = TimedRotatingFileHandler('heimdall.log', when='midnight', backupCount=5)
     handler.setLevel(logging.DEBUG)
     app.logger.addHandler(handler)
-    app.run("127.0.0.1", 8080, debug=True)
+    app.run("192.168.1.115", 8080, debug=True)
