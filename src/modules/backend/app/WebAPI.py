@@ -236,7 +236,6 @@ def getUserDistribution():
     else:
         return jsonify({})
 
-
 # Laws
 
 @app.route("/getLawsByDateInterval", methods=['POST'])
