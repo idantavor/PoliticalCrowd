@@ -46,6 +46,13 @@ def authenticate(token):
         raise e
 
 
+def getParamsFromJsonRequest(request, param_name):
+    req_data = request.get_json(force=True)
+    if param_name in req_data:
+        return req_data[param_name]
+    return None
+
+
 def getUsersId(request):
     user_token = request.form.get(USER_TOKEN)
     return authenticate(user_token)
