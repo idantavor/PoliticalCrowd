@@ -46,14 +46,8 @@ def authenticate(token):
         raise e
 
 
-def getParamsFromJsonRequest(request, param_name):
-    req_data = request.get_json(force=True)
-    return req_data.get(param_name)
-
-
-
 def getUsersId(request):
-    user_token = getParamsFromJsonRequest(USER_TOKEN)
+    user_token = request.form.get(USER_TOKEN)
     return authenticate(user_token)
 
 @app.before_request
@@ -140,11 +134,11 @@ def register():
     app.logger.info("got registration request")
     user_id = getUsersId(request)
     if not UserService.isUserExist(graph, user_id):
-        birth_year = getParamsFromJsonRequest(request, BIRTH_YEAR)
-        job = getParamsFromJsonRequest(request, JOB)
-        city = getParamsFromJsonRequest(request, RESIDENCY)
-        party = getParamsFromJsonRequest(request, PARTY)
-        involvement = InvolvementLevel[getParamsFromJsonRequest(request, INVOLVEMENT_LEVEL)]
+        birth_year = request.form.get(BIRTH_YEAR)
+        job = request.form.get(JOB)
+        city = request.form.get(RESIDENCY)
+        party = request.form.get(PARTY)
+        involvement = InvolvementLevel[request.form.get(INVOLVEMENT_LEVEL)]
 
         user = User.createUser(graph=graph, token=user_id, birthYear=birth_year,
                                involvementLevel=involvement.value, residancy=city,
@@ -166,7 +160,7 @@ def extractTags(tag):
 def allPartiesEfficiencyByTag():
     app.logger.debug("got getAllPartiesEfficiencyByTag request")
     getUsersId(request)
-    tag = extractTags(getParamsFromJsonRequest(request, TAGS))
+    tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.PARTY_EFFICIENCY))
 
 
@@ -174,7 +168,7 @@ def allPartiesEfficiencyByTag():
 def allLawProposalsByTag():
     app.logger.debug("got getAllLawProposalsByTag request")
     getUsersId(request)
-    tag = extractTags(getParamsFromJsonRequest(request, TAGS))
+    tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.LAW_PROPOSAL))
 
 
@@ -182,7 +176,7 @@ def allLawProposalsByTag():
 def allAbsentFromVotesByTag():
     app.logger.debug("got getAllAbsentFromVotesByTag request")
     getUsersId(request)
-    tag = extractTags(getParamsFromJsonRequest(request, TAGS))
+    tag = extractTags(request.form.get(TAGS))
     return jsonify(PartyService.getGeneralStats(graph=graph, tag=tag, type=PartyService.ABSENT_STATS))
 
 
@@ -211,7 +205,7 @@ def validElectedOfficial(elected_official):
 def userPartiesVotesMatchByTag():
     app.logger.debug("got getUserPartiesVotesMatchByTag request")
     user_id = getUsersId(request)
-    tag = extractTags(getParamsFromJsonRequest(request, TAGS))
+    tag = extractTags(request.form.get(TAGS))
     return jsonify(UserService.getUserPartiesVotesMatchByTag(graph=graph, user_id=user_id, tag=tag))
 
 
@@ -219,26 +213,22 @@ def userPartiesVotesMatchByTag():
 def userToElectedOfficialMatchByTag():
     app.logger.debug("got getUserToElectedOfficialMatchByTag request")
     user_id = getUsersId(request)
-    tag = extractTags(getParamsFromJsonRequest(request, TAGS))
-    elected_official = validElectedOfficial(getParamsFromJsonRequest(request, ELECTED_OFFICIAL))
+    tag = extractTags(request.form.get(TAGS))
+    elected_official = validElectedOfficial(request.form.get(ELECTED_OFFICIAL))
     return jsonify(
         UserService.getUserMatchForOfficial(graph=graph, user_id=user_id, member_name=elected_official, tag=tag))
 
 
-@app.route("/getUserDistribution", methods=['POST']) # TODO check correctness
+@app.route("/getUserDistribution", methods=['POST'])
 def getUserDistribution():
     app.logger.debug("got getUserDistribution request")
     user_id = getUsersId(request)
-    law_name = getParamsFromJsonRequest(request, LAW_NAME)
-    user_personal_details = UserService.getPersonalDetails(graph=graph, user_id=user_id)
-    distribution = dict()
-
+    law_name = request.form.get(LAW_NAME)
     if LawService.validUserVotesForDist(graph, law_name):
-        distribution = UserService.getUsersDistForLaw(graph, law_name)
+        return jsonify(UserService.getUsersDistForLaw(graph, law_name))
+    else:
+        return jsonify({})
 
-    distribution.update({"user_info": user_personal_details})
-
-    return jsonify(distribution)
 
 # Laws
 
@@ -246,8 +236,8 @@ def getUserDistribution():
 def lawsByDateInterval():
     app.logger.debug("got getLawsByDateInterval request")
     user_id = getUsersId(request)
-    start_date = getParamsFromJsonRequest(request, START_DATE)
-    end_date = getParamsFromJsonRequest(request, END_DATE)
+    start_date = request.form.get(START_DATE)
+    end_date = request.form.get(END_DATE)
     return jsonify(
         LawService.getLawsByDateInterval(graph=graph, start_date=start_date, end_date=end_date, user_id=user_id))
 
@@ -267,9 +257,9 @@ def lawVoteSubmit():
     app.logger.debug("got lawVoteSubmit request")
     user_id = getUsersId(request)
     app.logger.info("recieved request for vote from [" + str(user_id) + "]")
-    law_name = getParamsFromJsonRequest(request, LAW_NAME)
-    vote = getParamsFromJsonRequest(request, VOTE)
-    tags = getParamsFromJsonRequest(request, TAGS).split(",")
+    law_name = request.form.get(LAW_NAME)
+    vote = request.form.get(VOTE)
+    tags = request.form.get(TAGS).split(",")
 
     LawService.submitVoteAndTags(graph, law_name, tags, user_id, vote)
 
@@ -292,10 +282,10 @@ def updatePersonalInfo():
     app.logger.debug("got updatePersonalInfo request")
     user_id = getUsersId(request)
     app.logger.info("recieved request to update presonal info from [" + str(user_id) + "]")
-    job = getParamsFromJsonRequest(request, JOB)
-    residency = getParamsFromJsonRequest(request, RESIDENCY)
-    party = getParamsFromJsonRequest(request, PARTY)
-    involvement_level = getParamsFromJsonRequest(request, INVOLVEMENT_LEVEL)
+    job = request.form.get(JOB)
+    residency = request.form.get(RESIDENCY)
+    party = request.form.get(PARTY)
+    involvement_level = request.form.get(INVOLVEMENT_LEVEL)
     ProfileService.updatePersonlInfo(graph=graph, user_id=user_id, job=job, residency=residency, party=party,
                                      involvement_level=involvement_level)
     return jsonify("Success")
