@@ -52,8 +52,6 @@ def getUsersId(request):
 
 @app.before_request
 def log_request_info():
-    app.logger.debug('---------------------------------------------------------------------')
-    app.logger.debug('Headers: %s', request.headers)
     app.logger.debug('Body: %s', request.get_data())
 
 # api functions for first time login -- begin
@@ -299,5 +297,6 @@ def updatePersonalInfo():
 if __name__ == "__main__":
     handler = TimedRotatingFileHandler('heimdall.log', when='midnight', backupCount=5)
     handler.setLevel(logging.DEBUG)
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s ''[in %(pathname)s:%(lineno)d]'))
     app.logger.addHandler(handler)
     app.run("192.168.1.115", 8080, debug=True)
