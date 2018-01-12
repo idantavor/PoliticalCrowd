@@ -4,7 +4,7 @@ import logging
 
 from src.modules.backend.bl import LawService
 from src.modules.backend.common.APIConstants import AgeRange, JOB_FOR, JOB_AGAINST, RESIDENT_FOR, RESIDENT_AGAINST, \
-    AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT, AGE
+    AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT, AGE, RESIDENCY, JOB
 from src.modules.dal.graphObjects.graphObjects import *
 import datetime
 from itertools import groupby
@@ -49,8 +49,8 @@ def getUserAgeRange(user_node):
 def getPersonalDetails(graph, user_id):
     user = User.safeSelect(graph=graph, token=user_id)
     details = dict()
-    details[WORK_AT] = list(user.work_at)[0].name
-    details[RESIDING] = list(user.residing)[0].name
+    details[JOB] = list(user.work_at)[0].name
+    details[RESIDENCY] = list(user.residing)[0].name
     details[AGE] = getUserAgeRange(user)
     return details
 
@@ -129,9 +129,9 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
 
 
 def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 100):
-
+    tag_query= f" AND t.name='{tag}'"
     query = f"MATCH(u:{User.__name__})-[user_vote]->(l:{Law.__name__}){'' if tag is None else '<-[:{}]-(t:{})'.format(TAGGED_AS, Tag.__name__)} " \
-            f"WHERE u.token='{user_id}'{'' if tag is None else ' AND t.name={}'.format(tag)} " \
+            f"WHERE u.token='{user_id}'{'' if tag is None else tag_query} " \
             f"RETURN user_vote, l.name ORDER BY l.timestamp DESCENDING LIMIT {num_of_laws_backwards}"
 
     last_laws_voted = graph.run(query).data()
