@@ -14,6 +14,12 @@ from src.modules.dal.GraphConnection import bolt_connect
 from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial, Law, Residency, JobCategory, Tag
 from werkzeug.contrib.cache import SimpleCache
 
+import firebase_admin
+from firebase_admin import credentials
+
+cred = credentials.Certificate('C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resources\\google-services.json')
+default_app = firebase_admin.initialize_app(cred)
+
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
 
@@ -28,12 +34,14 @@ def defaultHandler(error):
 
 
 def authenticate(token):
-    return token
+    #return token
     try:
         if auth_cache.get(token) is not None and not auth_cache.get(token):
             raise ValueError('Illeagal Token')
 
-        id_info = id_token.verify_firebase_token(token, requests.Request())
+        #id_info = id_token.verify_firebase_token(token, requests.Request())
+        id_info = id_token.verify_oauth2_token(token, requests.Request())
+
 
         if id_info['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
             raise ValueError(f"Can't verify token: {token}")

@@ -84,7 +84,8 @@ def getUsersDistForLaw(graph, law_name):
 
 
 def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
-
+    if tag == "כללי":
+        tag = None
     tag_match = "" if tag is None else f"AND t.name='{tag}' AND (l)-[:{TAGGED_AS}]->(t)"
 
     query_total_laws = f"MATCH (u:{User.__name__}), (l:{Law.__name__}), (t:{Tag.__name__}), (v:{Vote.__name__}) " \
