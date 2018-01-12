@@ -261,6 +261,16 @@ def lawNotification():
     return jsonify(LawService.getNewLaws(graph=graph, user_id=user_id))
 
 
+@app.route("/getLawKnessetVotes", methods=['POST'])
+def getLawKnessetVotes():
+    user_id = getUsersId(request)
+    law_name = request.form.get(LAW_NAME)
+    user_vote = UserService.getUserVoteForLaw(graph=graph, law_name=law_name, user_id=user_id)
+    knesset_votes = LawService.getElectedOfficialLawStats(graph=graph, law_name=law_name, user_id=user_id, user_vote=user_vote)
+    return jsonify(knesset_votes)
+
+
+
 # Laws Actions
 
 @app.route("/lawVoteSubmit", methods=['POST'])
