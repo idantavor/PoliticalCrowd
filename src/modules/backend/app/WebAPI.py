@@ -28,7 +28,7 @@ def defaultHandler(error):
 
 
 def authenticate(token):
-    return token
+    #return token
     try:
         if auth_cache.get(token) is not None and not auth_cache.get(token):
             raise ValueError('Illeagal Token')
