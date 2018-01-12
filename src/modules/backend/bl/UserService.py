@@ -129,9 +129,9 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
 
 
 def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 100):
-
+    tag_query= f" AND t.name='{tag}'"
     query = f"MATCH(u:{User.__name__})-[user_vote]->(l:{Law.__name__}){'' if tag is None else '<-[:{}]-(t:{})'.format(TAGGED_AS, Tag.__name__)} " \
-            f"WHERE u.token='{user_id}'{'' if tag is None else ' AND t.name={}'.format(tag)} " \
+            f"WHERE u.token='{user_id}'{'' if tag is None else tag_query} " \
             f"RETURN user_vote, l.name ORDER BY l.timestamp DESCENDING LIMIT {num_of_laws_backwards}"
 
     last_laws_voted = graph.run(query).data()

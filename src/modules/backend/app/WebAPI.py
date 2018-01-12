@@ -299,4 +299,4 @@ if __name__ == "__main__":
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s ''[in %(pathname)s:%(lineno)d]'))
     app.logger.addHandler(handler)
-    app.run("192.168.1.115", 8080, debug=True)
+    app.run("127.0.0.1", 8080, debug=True)
