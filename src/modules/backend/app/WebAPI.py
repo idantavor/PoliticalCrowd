@@ -14,8 +14,8 @@ from src.modules.dal.GraphConnection import bolt_connect
 from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial, Law, Residency, JobCategory, Tag
 from werkzeug.contrib.cache import SimpleCache
 
-import firebase_admin
-from firebase_admin import credentials
+#import firebase_admin
+#from firebase_admin import credentials
 
 #cred = credentials.Certificate('C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resources\\google-services.json')
 #default_app = firebase_admin.initialize_app(cred)
@@ -317,4 +317,5 @@ if __name__ == "__main__":
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s ''[in %(pathname)s:%(lineno)d]'))
     app.logger.addHandler(handler)
+    #app.run("192.168.1.25", 8080, debug=True)
     app.run("127.0.0.1", 8080, debug=True)
