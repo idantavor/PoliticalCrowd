@@ -159,6 +159,13 @@ def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 1
     return res
 
 
+def getUserVoteForLaw(graph, user_id, law_name):
+    user = User.safeSelect(graph=graph, token=user_id)
+    law = Law.safeSelect(graph=graph, law_name=law_name)
+    return VOTED_FOR if law in list(user.voted_for) else VOTED_AGAINST
+
+
+
 
 
 
