@@ -17,8 +17,8 @@ from werkzeug.contrib.cache import SimpleCache
 import firebase_admin
 from firebase_admin import credentials
 
-cred = credentials.Certificate('C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resources\\google-services.json')
-default_app = firebase_admin.initialize_app(cred)
+#cred = credentials.Certificate('C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resources\\google-services.json')
+#default_app = firebase_admin.initialize_app(cred)
 
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
@@ -34,7 +34,7 @@ def defaultHandler(error):
 
 
 def authenticate(token):
-    #return token
+    return token
     try:
         if auth_cache.get(token) is not None and not auth_cache.get(token):
             raise ValueError('Illeagal Token')
