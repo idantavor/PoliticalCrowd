@@ -6,6 +6,7 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 import os, sys
 
+
 Base = os.path.join(os.path.abspath(__file__), '..', '..', '..', '..', '..')
 sys.path.append(os.path.abspath(Base))
 from src.modules.backend.bl import LawService, ProfileService, PartyService, UserService
@@ -14,11 +15,12 @@ from src.modules.dal.GraphConnection import bolt_connect
 from src.modules.dal.graphObjects.graphObjects import User, Party, ElectedOfficial, Law, Residency, JobCategory, Tag
 from werkzeug.contrib.cache import SimpleCache
 
-#import firebase_admin
-#from firebase_admin import credentials
+import firebase_admin
+from firebase_admin import credentials
 
-#cred = credentials.Certificate('C:\\Users\\oferh_000\\PycharmProjects\\PoliticalCrowd\\resources\\google-services.json')
-#default_app = firebase_admin.initialize_app(cred)
+cred = credentials.Certificate('heimdall-2a8f9-firebase-adminsdk-qxkjy-43f80b0547.json')
+firebase_admin.initialize_app(cred)
+
 
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
@@ -34,23 +36,23 @@ def defaultHandler(error):
 
 
 def authenticate(token):
-    return token
     try:
         if auth_cache.get(token) is not None and not auth_cache.get(token):
             raise ValueError('Illeagal Token')
 
-        #id_info = id_token.verify_firebase_token(token, requests.Request())
-        id_info = id_token.verify_oauth2_token(token, requests.Request())
+        id_info = id_token.verify_firebase_token(token, requests.Request())
 
 
-        if id_info['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
+        if id_info['iss'] not in ['https://securetoken.google.com/heimdall-2a8f9']:
             raise ValueError(f"Can't verify token: {token}")
-        # ID token is valid. Get the user's Google Account ID from the decoded token.
-        user_id = id_info['sub']
+
+        user_id = id_info['user_id']
         return user_id
 
     except ValueError as e:
         auth_cache.set(token, False, timeout=15 * 60)
+        raise e
+    except Exception as e:
         raise e
 
 
@@ -119,7 +121,7 @@ def getElectedOfficials():
 @app.route("/getCategoryNames", methods=['POST'])
 def getCategoryNames():
     app.logger.debug("categories request recieved")
-    getUsersId(request)
+    #getUsersId(request)
     return jsonify({
         "parties": getParties(),
         "residencies": getResidencies(),
