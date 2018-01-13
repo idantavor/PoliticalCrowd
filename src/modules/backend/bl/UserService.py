@@ -123,6 +123,9 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
 
     num_of_member_absent = float(list(graph.run(query_member_absent).data()[0].items())[0][1])
 
+    if int(num_of_total) == 0:
+        num_of_total = 1.0
+
     match_dict = {SAME: (num_of_same/num_of_total), DIFF: (num_of_different/num_of_total), MEMBER_ABSENT: (num_of_member_absent/num_of_total)}
 
     return match_dict

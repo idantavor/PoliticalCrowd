@@ -42,6 +42,9 @@ def _getPartyEfficiancy(graph, party, laws):
     for name in member_efficiency.keys():
         member_efficiency[name] = member_efficiency[name]/float(real_num_of_votes)
 
+    if wanted_num_of_votes == 0:
+        wanted_num_of_votes = 1
+
     party_efficiency = {PARTY_EFFICIENCY: real_num_of_votes / float(wanted_num_of_votes), MEMBER_EFFICIENCY: member_efficiency}
 
     logger.debug(f"for party:{party.name}, {str(party_efficiency)}")
@@ -95,7 +98,8 @@ def _getPartyAbsentFromLaws(graph, party, laws):
 
     for name in member_missing.keys():
         member_missing[name] = member_missing[name]/float(total_missing)
-
+    if total == 0:
+        total = 1
     party_missing = {PARTY_MISSING: total_missing/float(total), MEMBER_MISSING: member_missing}
 
     return party_missing

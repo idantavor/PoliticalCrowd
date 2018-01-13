@@ -5,11 +5,6 @@ import logging
 from itertools import islice
 
 from flask import json
-
-from src.modules.backend.common.APIConstants import InvolvementLevel
-from src.modules.dal.relations.Relations import ELECTED_VOTED_FOR, ELECTED_VOTED_AGAINST, ELECTED_MISSING, ELECTED_ABSTAINED
-
-from src.modules.backend.bl import UserService
 from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party, Tag, GeneralInfo
 
 from src.modules.dal.relations.Relations import *
