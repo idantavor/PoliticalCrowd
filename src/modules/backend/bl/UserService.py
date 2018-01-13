@@ -4,7 +4,7 @@ import logging
 
 from src.modules.backend.bl import LawService
 from src.modules.backend.common.APIConstants import AgeRange, JOB_FOR, JOB_AGAINST, RESIDENT_FOR, RESIDENT_AGAINST, \
-    AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT, AGE, RESIDENCY, JOB, PARTY, BIRTH_YEAR
+    AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT, AGE, RESIDENCY, JOB, PARTY, BIRTH_YEAR, INVOLVEMENT_LEVEL
 from src.modules.dal.graphObjects.graphObjects import *
 import datetime
 from itertools import groupby
@@ -61,6 +61,7 @@ def getPersonalInfo(graph, user_id):
     details[RESIDENCY] = list(user.residing)[0].name
     details[BIRTH_YEAR] = user.birth_year
     details[PARTY] = list(user.associate_party)[0].name
+    details[INVOLVEMENT_LEVEL] = InvolvementLevel(user.involvement_level).name
     return details
 
 def getUsersDistForLaw(graph, law_name):
