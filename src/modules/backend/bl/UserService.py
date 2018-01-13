@@ -4,7 +4,7 @@ import logging
 
 from src.modules.backend.bl import LawService
 from src.modules.backend.common.APIConstants import AgeRange, JOB_FOR, JOB_AGAINST, RESIDENT_FOR, RESIDENT_AGAINST, \
-    AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT, AGE, RESIDENCY, JOB
+    AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT, AGE, RESIDENCY, JOB, PARTY, BIRTH_YEAR
 from src.modules.dal.graphObjects.graphObjects import *
 import datetime
 from itertools import groupby
@@ -46,7 +46,7 @@ def getUserAgeRange(user_node):
     return f"{begin}-{end}"
 
 
-def getPersonalDetails(graph, user_id):
+def getPersonalPreferences(graph, user_id):
     user = User.safeSelect(graph=graph, token=user_id)
     details = dict()
     details[JOB] = list(user.work_at)[0].name
@@ -54,6 +54,14 @@ def getPersonalDetails(graph, user_id):
     details[AGE] = getUserAgeRange(user)
     return details
 
+def getPersonalInfo(graph, user_id):
+    user = User.safeSelect(graph=graph, token=user_id)
+    details = dict()
+    details[JOB] = list(user.work_at)[0].name
+    details[RESIDENCY] = list(user.residing)[0].name
+    details[BIRTH_YEAR] = user.birth_year
+    details[PARTY] = list(user.associate_party)[0].name
+    return details
 
 def getUsersDistForLaw(graph, law_name):
     law = Law.safeSelect(graph=graph, name=law_name)

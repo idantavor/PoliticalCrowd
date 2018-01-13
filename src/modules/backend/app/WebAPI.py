@@ -18,7 +18,8 @@ from werkzeug.contrib.cache import SimpleCache
 import firebase_admin
 from firebase_admin import credentials
 
-cred = credentials.Certificate('heimdall-2a8f9-firebase-adminsdk-qxkjy-43f80b0547.json')
+
+cred = credentials.Certificate(os.environ.get('API_KEY'))
 firebase_admin.initialize_app(cred)
 
 
@@ -36,7 +37,7 @@ def defaultHandler(error):
 
 
 def authenticate(token):
-    if token == 10:
+    if token == "10":
         return token
     try:
         if auth_cache.get(token) is not None and not auth_cache.get(token):
@@ -234,7 +235,7 @@ def getUserDistribution():
     app.logger.debug("got getUserDistribution request")
     user_id = getUsersId(request)
     law_name = request.form.get(LAW_NAME)
-    user_personal_details = UserService.getPersonalDetails(graph=graph, user_id=user_id)
+    user_personal_details = UserService.getPersonalPreferences(graph=graph, user_id=user_id)
     distribution = dict()
 
     if LawService.validUserVotesForDist(graph, law_name):
@@ -315,9 +316,13 @@ def updatePersonalInfo():
                                      involvement_level=involvement_level)
     return jsonify("Success")
 
+@app.route("/getUserInfo", methods=['POST'])
+def getUserInfo():
+    user_id = getUsersId(request)
+    UserService.getPersonalInfo(graph=graph, user_id=user_id)
 
 if __name__ == "__main__":
-    handler = TimedRotatingFileHandler('heimdall.log', when='midnight', backupCount=5)
+    handler = TimedRotatingFileHandler(os.environ.get('LOG_PATH')+'heimdall.log', when='midnight', backupCount=5)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s ''[in %(pathname)s:%(lineno)d]'))
     app.logger.addHandler(handler)
