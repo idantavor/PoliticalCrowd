@@ -5,12 +5,23 @@ import logging
 from itertools import islice
 
 from flask import json
+
+from modules.dal.GraphConnection import bolt_connect
 from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party, Tag, GeneralInfo
 
 from src.modules.dal.relations.Relations import *
 
 logger = logging.getLogger(__name__)
 
+def countPartyMemebers():
+    g = bolt_connect()
+    res = {}
+    parties = list(Party.select(g))
+    for party in parties:
+        res[party.name]=len(list(party.party_members))
+    return res
+
+party_memebers_counter = countPartyMemebers()
 
 def getLawTags(graph, law_name):
     law = Law.safeSelect(graph=graph, name=law_name)
@@ -181,6 +192,7 @@ def calculateStats(voted_for, voted_against, missing, abstained):
         else:
             res[party][ELECTED_ABSTAINED] = votes
 
+
     return res
 
 def createStatsResponse(user_party, user_vote, votes):
@@ -226,10 +238,17 @@ def _getElectedOfficialLawStats(graph, law_name, user_vote, user_party):
 def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
     user = User.safeSelect(graph = graph, token=user_id)
     user_party = list(user.associate_party)[0].name
-    return _getElectedOfficialLawStats(graph=graph, law_name=law_name, user_vote=user_vote, user_party=user_party)
+    res = _getElectedOfficialLawStats(graph=graph, law_name=law_name, user_vote=user_vote, user_party=user_party)
+    for party_name in res.keys():
+        res[party_name]['number_of_members']=party_memebers_counter[party_name]
+    return res
 
 
 def validUserVotesForDist(graph, law_name):
     law = Law.safeSelect(graph, law_name)
-    return (len(list(law.users_voted_againts))+ len(list(law.users_voted_for))) >= 1
+    return (len(list(law.users_voted_againts))+ len(list(law.users_voted_for))) >= 10
+
+
+
+
 
