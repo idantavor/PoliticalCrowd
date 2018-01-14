@@ -327,6 +327,7 @@ def getUserInfo():
 if __name__ == "__main__":
     #handler = TimedRotatingFileHandler(os.environ.get('LOG_PATH')+'heimdall.log', when='midnight', backupCount=5)
     handler = TimedRotatingFileHandler('/home/i_tavor/conf/heimdall.log', when='midnight', backupCount=5)
+    # handler = TimedRotatingFileHandler('/home/ramhillel/Desktop/heimdall.log', when='midnight', backupCount=5)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s ''[in %(pathname)s:%(lineno)d]'))
     app.logger.addHandler(handler)
