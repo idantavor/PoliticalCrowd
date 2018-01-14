@@ -6,7 +6,7 @@ from itertools import islice
 
 from flask import json
 
-from modules.dal.GraphConnection import bolt_connect
+from src.modules.dal.GraphConnection import bolt_connect
 from src.modules.dal.graphObjects.graphObjects import User, Law, ElectedOfficial, Vote, Party, Tag, GeneralInfo
 
 from src.modules.dal.relations.Relations import *
