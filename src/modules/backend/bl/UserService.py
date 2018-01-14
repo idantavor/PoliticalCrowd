@@ -4,7 +4,7 @@ import logging
 
 from src.modules.backend.bl import LawService
 from src.modules.backend.common.APIConstants import AgeRange, JOB_FOR, JOB_AGAINST, RESIDENT_FOR, RESIDENT_AGAINST, \
-    AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT
+    AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT, AGE, RESIDENCY, JOB, PARTY, BIRTH_YEAR, INVOLVEMENT_LEVEL
 from src.modules.dal.graphObjects.graphObjects import *
 import datetime
 from itertools import groupby
@@ -46,6 +46,24 @@ def getUserAgeRange(user_node):
     return f"{begin}-{end}"
 
 
+def getPersonalPreferences(graph, user_id):
+    user = User.safeSelect(graph=graph, token=user_id)
+    details = dict()
+    details[JOB] = list(user.work_at)[0].name
+    details[RESIDENCY] = list(user.residing)[0].name
+    details[AGE] = getUserAgeRange(user)
+    return details
+
+def getPersonalInfo(graph, user_id):
+    user = User.safeSelect(graph=graph, token=user_id)
+    details = dict()
+    details[JOB] = list(user.work_at)[0].name
+    details[RESIDENCY] = list(user.residing)[0].name
+    details[BIRTH_YEAR] = user.birth_year
+    details[PARTY] = list(user.associate_party)[0].name
+    details[INVOLVEMENT_LEVEL] = InvolvementLevel(user.involvement_level).name
+    return details
+
 def getUsersDistForLaw(graph, law_name):
     law = Law.safeSelect(graph=graph, name=law_name)
     voted_for =  list(law.users_voted_for)
@@ -75,7 +93,8 @@ def getUsersDistForLaw(graph, law_name):
 
 
 def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
-
+    if tag == "כללי":
+        tag = None
     tag_match = "" if tag is None else f"AND t.name='{tag}' AND (l)-[:{TAGGED_AS}]->(t)"
 
     query_total_laws = f"MATCH (u:{User.__name__}), (l:{Law.__name__}), (t:{Tag.__name__}), (v:{Vote.__name__}) " \
@@ -113,6 +132,9 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
 
     num_of_member_absent = float(list(graph.run(query_member_absent).data()[0].items())[0][1])
 
+    if int(num_of_total) == 0:
+        num_of_total = 1.0
+
     match_dict = {SAME: (num_of_same/num_of_total), DIFF: (num_of_different/num_of_total), MEMBER_ABSENT: (num_of_member_absent/num_of_total)}
 
     return match_dict
@@ -120,9 +142,9 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
 
 
 def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 100):
-
+    tag_query= f" AND t.name='{tag}'"
     query = f"MATCH(u:{User.__name__})-[user_vote]->(l:{Law.__name__}){'' if tag is None else '<-[:{}]-(t:{})'.format(TAGGED_AS, Tag.__name__)} " \
-            f"WHERE u.token='{user_id}'{'' if tag is None else ' AND t.name={}'.format(tag)} " \
+            f"WHERE u.token='{user_id}'{'' if tag is None else tag_query} " \
             f"RETURN user_vote, l.name ORDER BY l.timestamp DESCENDING LIMIT {num_of_laws_backwards}"
 
     last_laws_voted = graph.run(query).data()
@@ -148,6 +170,13 @@ def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 1
                       "is_users_party" : match["is_users_party"]}
 
     return res
+
+
+def getUserVoteForLaw(graph, user_id, law_name):
+    user = User.safeSelect(graph=graph, token=user_id)
+    law = Law.safeSelect(graph=graph, law_name=law_name)
+    return VOTED_FOR if law in list(user.voted_for) else VOTED_AGAINST
+
 
 
 
