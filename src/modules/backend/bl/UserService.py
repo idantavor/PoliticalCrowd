@@ -40,7 +40,7 @@ def getUserAgeRange(user_node):
         begin = str(AgeRange.Fourth.value)
         end = str(AgeRange.Fifth.value)
     else:
-        begin = str(AgeRange.Fifth)
+        begin = str(AgeRange.Fifth.value)
         end = ""
 
     return f"{begin}-{end}"
