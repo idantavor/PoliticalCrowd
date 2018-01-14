@@ -158,7 +158,12 @@ def getLawsByDateInterval(graph, start_date, end_date, user_id):
 
 def countPartyVotes(data):
     res = {}
+    timestamp = None
     for selection in data:
+        if timestamp is not None and timestamp != selection["v.timestamp"]:
+            break
+        else:
+            timestamp = selection["v.timestamp"]
         if res.get(selection["p.name"]) is None:
             res[selection["p.name"]]= {"count" : 1,
                                        "elected_officials" : [selection["e"].properties]}
@@ -215,7 +220,7 @@ def _getElectedOfficialLawStats(graph, law_name, user_vote, user_party):
     query = f"MATCH(l:{Law.__name__}) MATCH(v:{Vote.__name__}) MATCH(e:{ElectedOfficial.__name__}) MATCH(p:{Party.__name__}) WHERE (v)-[:{LAW}]->(l) "\
             +"AND (v)-[:{}]->(e) AND " \
             f"(e)-[:{MEMBER_OF_PARTY}]->(p) AND "\
-            +"l.name = '{}' return e, p.name "\
+            +"l.name = '{}' return e,v.timestamp, p.name "\
             "ORDER BY v.timestamp DESCENDING"
 
     voted_for = graph.run(query.format(ELECTED_VOTED_FOR,law_name)).data()

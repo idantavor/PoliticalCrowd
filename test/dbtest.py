@@ -37,31 +37,34 @@ tags = ['טכנולוגיה', 'תרבות', 'כלכלה', 'ביטחון', 'פל�
         'רפואה', 'סוציאליסטי', 'קפיטליסטי', 'ימני', 'שמאלני', 'דת',
         'בני מיעוטים', 'איכות הסביבה', 'תשתיות', 'משאבי טבע', 'חינוך', 'מיסים']
 
-num_of_users = 20
-jobs = list(JobCategory.select(graph))
-cities = list(Residency.select(graph))
-parties = list(Party.select(graph))
+#num_of_users = 20
+# jobs = list(JobCategory.select(graph))
+# cities = list(Residency.select(graph))
+# parties = list(Party.select(graph))
 laws=list(Law.select(graph))
+#
+# job_lst =[]
+# city_lst =[]
+# party_lst = []
+# year_lst=[1980, 1960, 1990, 1930]
+# for i in range(0, 5):
+#     job_lst.append(jobs[i].name)
+#     city_lst.append(cities[i].name)
+#     party_lst.append(parties[i].name)
 
-job_lst =[]
-city_lst =[]
-party_lst = []
-year_lst=[1980, 1960, 1990, 1930]
-for i in range(0, 5):
-    job_lst.append(jobs[i].name)
-    city_lst.append(cities[i].name)
-    party_lst.append(parties[i].name)
+user_lst = list(User.select(graph))
+# for i in range(11,num_of_users):
+#     user_lst.append(User.createUser(graph, str(i), job_lst[i%5], year_lst[i%4], city_lst[i%5], InvolvementLevel.MEDIUM.value, party_lst[i%len(party_lst)]))
 
-
-user_lst = []
-for i in range(11,num_of_users):
-    user_lst.append(User.createUser(graph, str(i), job_lst[i%5], year_lst[i%4], city_lst[i%5], InvolvementLevel.MEDIUM))
-
-
-for user in user_lst:
-    for law in laws:
+limit_laws = 50
+law_count=0
+for law in laws:
+    law_count += 1
+    if law_count == limit_laws:
+        break
+    for user in user_lst:
         vote = random.choice([True, False])
         user.voteLaw(graph, law.name, vote)
-        user.tagLaw(graph, law.name, random.choice(tags))
+        user.tagLaw(graph, law.name, [random.choice(tags)])
 
 
