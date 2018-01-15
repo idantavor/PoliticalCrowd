@@ -336,7 +336,6 @@ def main(args):
         JobCategory.add_jobs_to_db(graph,logger)
         Residency.add_residencies_to_db(graph,logger)
         add_parties_and_members_to_db()
-        exit(0)
     first_time = True
     now = datetime.datetime.now()
     while True:
