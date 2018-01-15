@@ -15,7 +15,7 @@ import logging
 
 logger = getLogger('crawler')
 
-graph = bolt_connect()  # type: Graph
+graph = None  # type: Graph
 
 
 def auto_retry(num_of_retries):
@@ -271,7 +271,7 @@ def get_vote_detail_dict(vote_url):
         else:
             voting_members = elem_vote_table[0].xpath('.//a/text()')
             res_dict["{}_cnt".format(vote_type)] = len(voting_members)
-            res_dict[vote_type] = [" ".join(member.split()) for member in voting_members]
+            res_dict[vote_type] = [" ".join(member.strip().split()) for member in voting_members]
     num_of_voting_electors = 0
     for vote_type in VOTE_TYPE_IMAGE_LABELS.keys():
         if vote_type == "DIDNT_VOTE":

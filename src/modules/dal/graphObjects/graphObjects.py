@@ -225,25 +225,29 @@ class Vote(GraphObject):
             for member_name in vote_details_json['FOR']:
                 member=ElectedOfficial.select(graph,str(member_name)).first()
                 if member is None:
-                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                    continue
+                    #raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_for.add(member)
                 members_viewed.add(member.name)
             for member_name in vote_details_json['ABSTAINED']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
-                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                    continue
+                    #raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_abstained.add(member)
                 members_viewed.add(member.name)
             for member_name in vote_details_json['AGAINST']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
-                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                    continue
+                    #raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_voted_against.add(member)
                 members_viewed.add(member.name)
             for member_name in vote_details_json['DIDNT_VOTE']:
                 member = ElectedOfficial.select(graph, member_name).first()
                 if member is None:
-                    raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
+                    continue
+                    #raise Exception("fail to retrieve ElectedOfficial {} from db".format(member_name))
                 vote.elected_missing.add(member)
                 members_viewed.add(member.name)
             # add all missing members
