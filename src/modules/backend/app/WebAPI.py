@@ -19,8 +19,8 @@ import firebase_admin
 from firebase_admin import credentials
 
 
-cred = credentials.Certificate(os.environ.get('API_KEY'))
-#cred = credentials.Certificate("/home/i_tavor/conf/api-key/heimdall-2a8f9-firebase-adminsdk-qxkjy-43f80b0547.json")
+#cred = credentials.Certificate(os.environ.get('API_KEY'))
+cred = credentials.Certificate("/home/i_tavor/conf/api-key/heimdall-2a8f9-firebase-adminsdk-qxkjy-43f80b0547.json")
 firebase_admin.initialize_app(cred)
 
 
@@ -325,8 +325,8 @@ def getUserInfo():
     return jsonify(UserService.getPersonalInfo(graph=graph, user_id=user_id))
 
 if __name__ == "__main__":
-    handler = TimedRotatingFileHandler(os.environ.get('LOG_PATH')+'heimdall.log', when='midnight', backupCount=5)
-    #handler = TimedRotatingFileHandler('/home/i_tavor/conf/heimdall.log', when='midnight', backupCount=5)
+    #handler = TimedRotatingFileHandler(os.environ.get('LOG_PATH')+'heimdall.log', when='midnight', backupCount=5)
+    handler = TimedRotatingFileHandler('/home/i_tavor/conf/heimdall.log', when='midnight', backupCount=5)
     # handler = TimedRotatingFileHandler('/home/ramhillel/Desktop/heimdall.log', when='midnight', backupCount=5)
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s ''[in %(pathname)s:%(lineno)d]'))
