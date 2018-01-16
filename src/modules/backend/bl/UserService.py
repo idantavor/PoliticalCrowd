@@ -156,7 +156,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
 
 
 
-def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 15):
+def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 10):
     if tag == "כללי":
         tag = None
     tag_query = f" AND t.name='{tag}'"
