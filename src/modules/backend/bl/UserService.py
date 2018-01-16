@@ -162,6 +162,7 @@ def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 1
     tag_query = f" AND t.name='{tag}'"
     query = f"MATCH(u:{User.__name__})-[user_vote]->(l:{Law.__name__}){'' if tag is None else '-[:{}]->(t:{})'.format(TAGGED_AS, Tag.__name__)} " \
             f"WHERE u.token='{user_id}'{'' if tag is None else tag_query} " \
+            f"AND (type(user_vote)='{VOTED_FOR}' OR type(user_vote)='{VOTED_AGAINST}') "\
             f"RETURN user_vote, l.name ORDER BY l.timestamp DESCENDING LIMIT {num_of_laws_backwards}"
 
     last_laws_voted = graph.run(query).data()
@@ -172,8 +173,6 @@ def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 1
     user = User.safeSelect(graph=graph, token=user_id)
     user_party = list(user.associate_party)[0].name
     for selection in last_laws_voted:
-        if selection["user_vote"]._Relationship__type == TAGGED_AS:
-            continue
         law_votes = LawService._getElectedOfficialLawStats(graph=graph, law_name=selection["l.name"], user_party=user_party,user_vote=selection["user_vote"]._Relationship__type)
         for party, info in law_votes.items():
             if res.get(party) is None:

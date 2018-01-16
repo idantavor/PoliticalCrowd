@@ -40,7 +40,7 @@ def submitVoteAndTags(graph, law_name, tags, user_id, vote):
         user.voteLaw(graph=graph, law_name=law_name, is_upvote=False)
         logger.debug("[" + str(user_id) + "] voted against " + law_name)
     else:
-        raise Exception("ileagal vote type")
+        raise Exception("ileagal vote type ["+vote+"]")
     if tags is not None and tags is not []:
         user.tagLaw(graph=graph, law_name=law_name, tags_names=tags)
         logger.debug("[" + str(user_id) + "] tagged law [" + law_name + "] as " + str(tags))
