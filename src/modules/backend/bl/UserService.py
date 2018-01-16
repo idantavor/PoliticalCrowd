@@ -99,7 +99,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
             .timetuple())
     old_timestamp = time.mktime(
         datetime.strptime(
-            (datetime.fromtimestamp(time.time()) - timedelta(days=45)).date().strftime("%d/%m/%Y"),
+            (datetime.fromtimestamp(time.time()) - timedelta(days=30)).date().strftime("%d/%m/%Y"),
             "%d/%m/%Y")
             .timetuple())
 
