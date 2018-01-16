@@ -6,7 +6,6 @@ from google.auth.transport import requests
 from google.oauth2 import id_token
 import os, sys
 
-
 Base = os.path.join(os.path.abspath(__file__), '..', '..', '..', '..', '..')
 sys.path.append(os.path.abspath(Base))
 from src.modules.backend.bl import LawService, ProfileService, PartyService, UserService
@@ -18,11 +17,9 @@ from werkzeug.contrib.cache import SimpleCache
 import firebase_admin
 from firebase_admin import credentials
 
- 
-#cred = credentials.Certificate(os.environ.get('API_KEY'))
+# cred = credentials.Certificate(os.environ.get('API_KEY'))
 cred = credentials.Certificate("/home/i_tavor/conf/api-key/heimdall-2a8f9-firebase-adminsdk-qxkjy-43f80b0547.json")
 firebase_admin.initialize_app(cred)
-
 
 app = Flask(__name__)
 app.secret_key = "ThisIsNotThePassword"
@@ -46,7 +43,6 @@ def authenticate(token):
 
         id_info = id_token.verify_firebase_token(token, requests.Request())
 
-
         if id_info['iss'] not in ['https://securetoken.google.com/heimdall-2a8f9']:
             raise ValueError(f"Can't verify token: {token}")
 
@@ -64,9 +60,11 @@ def getUsersId(request):
     user_token = request.form.get(USER_TOKEN)
     return authenticate(user_token)
 
+
 @app.before_request
 def log_request_info():
     app.logger.debug('Body: %s', request.get_data())
+
 
 # api functions for first time login -- begin
 
@@ -125,7 +123,7 @@ def getElectedOfficials():
 @app.route("/getCategoryNames", methods=['POST'])
 def getCategoryNames():
     app.logger.debug("categories request recieved")
-    #getUsersId(request)
+    # getUsersId(request)
     return jsonify({
         "parties": getParties(),
         "residencies": getResidencies(),
@@ -278,7 +276,6 @@ def getLawKnessetVotes():
     return jsonify(law_stats)
 
 
-
 # Laws Actions
 
 @app.route("/lawVoteSubmit", methods=['POST'])
@@ -319,10 +316,12 @@ def updatePersonalInfo():
                                      involvement_level=involvement_level)
     return jsonify("Success")
 
+
 @app.route("/getUserInfo", methods=['POST'])
 def getUserInfo():
     user_id = getUsersId(request)
     return jsonify(UserService.getPersonalInfo(graph=graph, user_id=user_id))
+
 
 if __name__ == "__main__":
     #handler = TimedRotatingFileHandler(os.environ.get('LOG_PATH')+'heimdall.log', when='midnight', backupCount=5)
@@ -331,5 +330,5 @@ if __name__ == "__main__":
     handler.setLevel(logging.DEBUG)
     handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s ''[in %(pathname)s:%(lineno)d]'))
     app.logger.addHandler(handler)
-    #app.run("192.168.1.25", 8080, debug=True)
+    # app.run("192.168.1.25", 8080, debug=True)
     app.run("127.0.0.1", 8080, debug=True)

@@ -40,12 +40,13 @@ def _getPartyEfficiancy(graph, party, laws):
                 member_efficiency[elect.name] = 1
 
     for name in member_efficiency.keys():
-        member_efficiency[name] = member_efficiency[name]/float(real_num_of_votes)
+        member_efficiency[name] = member_efficiency[name] / float(real_num_of_votes)
 
     if wanted_num_of_votes == 0:
         wanted_num_of_votes = 1
 
-    party_efficiency = {PARTY_EFFICIENCY: real_num_of_votes / float(wanted_num_of_votes), MEMBER_EFFICIENCY: member_efficiency}
+    party_efficiency = {PARTY_EFFICIENCY: real_num_of_votes / float(wanted_num_of_votes),
+                        MEMBER_EFFICIENCY: member_efficiency}
 
     logger.debug(f"for party:{party.name}, {str(party_efficiency)}")
 
@@ -77,8 +78,10 @@ def getAllLawProposalPerParty(graph, tag, num_of_laws_backward):
     for party_name, names_vs_party in itertools.groupby(proposed_by, key=lambda tup: tup[1]):
         elected_list = [name for name, party in list(filter(lambda p: p[1] == party_name, proposed_by))]
         num_of_proposals = len(elected_list)
-        elected_proposals = {name : len(list(group))/float(num_of_proposals) for name, group in itertools.groupby(sorted(elected_list))}
-        all_proposals[party_name] = {NUM_OF_PROPOSALS:(num_of_proposals/float(total_num_of_laws)), ELECTED_PROPOSALS: elected_proposals}
+        elected_proposals = {name: len(list(group)) / float(num_of_proposals) for name, group in
+                             itertools.groupby(sorted(elected_list))}
+        all_proposals[party_name] = {NUM_OF_PROPOSALS: (num_of_proposals / float(total_num_of_laws)),
+                                     ELECTED_PROPOSALS: elected_proposals}
 
     return all_proposals
 
@@ -97,10 +100,10 @@ def _getPartyAbsentFromLaws(graph, party, laws):
                 member_missing[elector.name] = 1
 
     for name in member_missing.keys():
-        member_missing[name] = member_missing[name]/float(total_missing)
+        member_missing[name] = member_missing[name] / float(total_missing)
     if total == 0:
         total = 1
-    party_missing = {PARTY_MISSING: total_missing/float(total), MEMBER_MISSING: member_missing}
+    party_missing = {PARTY_MISSING: total_missing / float(total), MEMBER_MISSING: member_missing}
 
     return party_missing
 
@@ -131,13 +134,16 @@ def createGeneralStats(num_of_laws_backward):
         law_proposals = f"{LAW_PROPOSAL}_{tag_name}"
         absent_stats = f"{ABSENT_STATS}_{tag_name}"
 
-        raw_data_efficiency = json.dumps(getAllPartiesEfficiencyByTag(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+        raw_data_efficiency = json.dumps(
+            getAllPartiesEfficiencyByTag(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
         GeneralInfo.createGeneralInfo(graph=graph, type=party_efficiency, raw_data=raw_data_efficiency)
 
-        raw_data_proposals = json.dumps(getAllLawProposalPerParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+        raw_data_proposals = json.dumps(
+            getAllLawProposalPerParty(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
         GeneralInfo.createGeneralInfo(graph=graph, type=law_proposals, raw_data=raw_data_proposals)
 
-        raw_data_absent = json.dumps(absentFromVotes(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
+        raw_data_absent = json.dumps(
+            absentFromVotes(graph=graph, tag=tag_name, num_of_laws_backward=num_of_laws_backward))
         GeneralInfo.createGeneralInfo(graph=graph, type=absent_stats, raw_data=raw_data_absent)
 
 
@@ -146,14 +152,7 @@ def getGeneralStats(graph, type, tag):
         tag = None
 
     tag = tag.strip() if tag is not None else None
-    
+
     node_type = f"{type}_{tag}"
     data = json.loads(GeneralInfo.safeSelect(graph=graph, type=node_type).raw_data)
     return data
-
-
-
-
-
-
-

@@ -13,15 +13,18 @@ from src.modules.dal.relations.Relations import *
 
 logger = logging.getLogger(__name__)
 
+
 def countPartyMemebers():
     g = bolt_connect()
     res = {}
     parties = list(Party.select(g))
     for party in parties:
-        res[party.name]=len(list(party.party_members))
+        res[party.name] = len(list(party.party_members))
     return res
 
+
 party_memebers_counter = countPartyMemebers()
+
 
 def getLawTags(graph, law_name):
     law = Law.safeSelect(graph=graph, name=law_name)
@@ -40,26 +43,27 @@ def submitVoteAndTags(graph, law_name, tags, user_id, vote):
         user.voteLaw(graph=graph, law_name=law_name, is_upvote=False)
         logger.debug("[" + str(user_id) + "] voted against " + law_name)
     else:
-        raise Exception("ileagal vote type ["+vote+"]")
+        raise Exception("ileagal vote type [" + vote + "]")
     if tags is not None and tags is not []:
         user.tagLaw(graph=graph, law_name=law_name, tags_names=tags)
         logger.debug("[" + str(user_id) + "] tagged law [" + law_name + "] as " + str(tags))
         user.updateRankIfNeeded()
         logger.debug("[" + str(user_id) + "] rank updated")
 
+
 def getNewLaws(graph, user_id):
     today_timestamp = time.mktime(
         datetime.strptime(
             datetime.fromtimestamp(time.time()).date().strftime("%d/%m/%Y"),
             "%d/%m/%Y")
-        .timetuple())
+            .timetuple())
     yesterday_timestamp = time.mktime(
         datetime.strptime(
             (datetime.fromtimestamp(time.time()) - timedelta(days=1)).date().strftime("%d/%m/%Y"),
             "%d/%m/%Y")
             .timetuple())
     new_laws = Law.select(graph).where(f"{int(yesterday_timestamp)}<= _.timestamp <={int(today_timestamp)}")
-    user = User.safeSelect(graph=graph ,token=user_id)
+    user = User.safeSelect(graph=graph, token=user_id)
     inv = user.involvement_level
     res = []
     for law in new_laws:
@@ -143,16 +147,17 @@ def getNumOfLawsByTag(graph, tag, num_of_laws):
 def getLawsByDateInterval(graph, start_date, end_date, user_id):
     start_date = time.mktime(datetime.strptime(start_date, "%d/%m/%Y").timetuple())
     end_date = time.mktime(datetime.strptime(end_date, "%d/%m/%Y").timetuple())
-    law_set = Law.select(graph)\
+    law_set = Law.select(graph) \
         .where("{}<= _.timestamp <={}".format(start_date, end_date))
     res = {}
     user = User.safeSelect(graph, user_id)
     for law in law_set:
         tags = getLawTags(graph, law.name)
-        res[law.name] = {"link" : law.link,
-                         "description" : law.description,
-                         "tags" : tags,
-                         "user_voted" : "for" if user in list(law.users_voted_for) else "against" if user in list(law.users_voted_againts) else "no_vote"}
+        res[law.name] = {"link": law.link,
+                         "description": law.description,
+                         "tags": tags,
+                         "user_voted": "for" if user in list(law.users_voted_for) else "against" if user in list(
+                             law.users_voted_againts) else "no_vote"}
     return res
 
 
@@ -165,40 +170,40 @@ def countPartyVotes(data):
         else:
             timestamp = selection["v.timestamp"]
         if res.get(selection["p.name"]) is None:
-            res[selection["p.name"]]= {"count" : 1,
-                                       "elected_officials" : [selection["e"].properties]}
+            res[selection["p.name"]] = {"count": 1,
+                                        "elected_officials": [selection["e"].properties]}
         else:
             res[selection["p.name"]]["count"] += 1
             res[selection["p.name"]]["elected_officials"].append(selection["e"].properties)
     return res
 
+
 def calculateStats(voted_for, voted_against, missing, abstained):
     res = {}
 
     for party, votes in voted_for.items():
-        res[party] = {VOTED_FOR : votes}
-
+        res[party] = {VOTED_FOR: votes}
 
     for party, votes in voted_against.items():
         if res.get(party) is None:
-            res[party] = {VOTED_AGAINST : votes}
+            res[party] = {VOTED_AGAINST: votes}
         else:
             res[party][VOTED_AGAINST] = votes
 
     for party, votes in missing.items():
         if res.get(party) is None:
-            res[party] = {ELECTED_MISSING : votes}
+            res[party] = {ELECTED_MISSING: votes}
         else:
             res[party][ELECTED_MISSING] = votes
 
     for party, votes in abstained.items():
         if res.get(party) is None:
-            res[party] = {ELECTED_ABSTAINED : votes}
+            res[party] = {ELECTED_ABSTAINED: votes}
         else:
             res[party][ELECTED_ABSTAINED] = votes
 
-
     return res
+
 
 def createStatsResponse(user_party, user_vote, votes):
     res = {}
@@ -207,23 +212,26 @@ def createStatsResponse(user_party, user_vote, votes):
         voted_like_user = party_vote.get(user_vote)["count"] if party_vote.get(user_vote) is not None else 0
         res[party_name] = {"match": (voted_like_user / total_votes),
                            "is_users_party": True if user_party == party_name else False,
-                           "elected_voted": {"for" : party_vote[VOTED_FOR] if party_vote.get(VOTED_FOR) is not None else {},
-                                             "against": party_vote[VOTED_AGAINST] if party_vote.get(VOTED_AGAINST) is not None else {},
-                                             "abstained": party_vote[ELECTED_ABSTAINED] if party_vote.get(ELECTED_ABSTAINED) is not None else {},
-                                             "missing": party_vote[ELECTED_MISSING] if party_vote.get(ELECTED_ABSTAINED) is not None else {}}
+                           "elected_voted": {
+                               "for": party_vote[VOTED_FOR] if party_vote.get(VOTED_FOR) is not None else {},
+                               "against": party_vote[VOTED_AGAINST] if party_vote.get(
+                                   VOTED_AGAINST) is not None else {},
+                               "abstained": party_vote[ELECTED_ABSTAINED] if party_vote.get(
+                                   ELECTED_ABSTAINED) is not None else {},
+                               "missing": party_vote[ELECTED_MISSING] if party_vote.get(
+                                   ELECTED_ABSTAINED) is not None else {}}
                            }
     return res
 
 
 def _getElectedOfficialLawStats(graph, law_name, user_vote, user_party):
+    query = f"MATCH(l:{Law.__name__}) MATCH(v:{Vote.__name__}) MATCH(e:{ElectedOfficial.__name__}) MATCH(p:{Party.__name__}) WHERE (v)-[:{LAW}]->(l) " \
+            + "AND (v)-[:{}]->(e) AND " \
+              f"(e)-[:{MEMBER_OF_PARTY}]->(p) AND " \
+            + "l.name = '{}' return e,v.timestamp, p.name " \
+              "ORDER BY v.timestamp DESCENDING"
 
-    query = f"MATCH(l:{Law.__name__}) MATCH(v:{Vote.__name__}) MATCH(e:{ElectedOfficial.__name__}) MATCH(p:{Party.__name__}) WHERE (v)-[:{LAW}]->(l) "\
-            +"AND (v)-[:{}]->(e) AND " \
-            f"(e)-[:{MEMBER_OF_PARTY}]->(p) AND "\
-            +"l.name = '{}' return e,v.timestamp, p.name "\
-            "ORDER BY v.timestamp DESCENDING"
-
-    voted_for = graph.run(query.format(ELECTED_VOTED_FOR,law_name)).data()
+    voted_for = graph.run(query.format(ELECTED_VOTED_FOR, law_name)).data()
     voted_against = graph.run(query.format(ELECTED_VOTED_AGAINST, law_name)).data()
     missing = graph.run(query.format(ELECTED_MISSING, law_name)).data()
     abstained = graph.run(query.format(ELECTED_ABSTAINED, law_name)).data()
@@ -241,19 +249,14 @@ def _getElectedOfficialLawStats(graph, law_name, user_vote, user_party):
 
 
 def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
-    user = User.safeSelect(graph = graph, token=user_id)
+    user = User.safeSelect(graph=graph, token=user_id)
     user_party = list(user.associate_party)[0].name
     res = _getElectedOfficialLawStats(graph=graph, law_name=law_name, user_vote=user_vote, user_party=user_party)
     for party_name in res.keys():
-        res[party_name]['number_of_members']=party_memebers_counter[party_name]
+        res[party_name]['number_of_members'] = party_memebers_counter[party_name]
     return res
 
 
 def validUserVotesForDist(graph, law_name):
     law = Law.safeSelect(graph, law_name)
-    return (len(list(law.users_voted_againts))+ len(list(law.users_voted_for))) >= 1
-
-
-
-
-
+    return (len(list(law.users_voted_againts)) + len(list(law.users_voted_for))) >= 1
