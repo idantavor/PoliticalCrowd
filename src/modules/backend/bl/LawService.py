@@ -251,7 +251,7 @@ def getElectedOfficialLawStats(graph, law_name, user_vote, user_id):
 
 def validUserVotesForDist(graph, law_name):
     law = Law.safeSelect(graph, law_name)
-    return (len(list(law.users_voted_againts))+ len(list(law.users_voted_for))) >= 10
+    return (len(list(law.users_voted_againts))+ len(list(law.users_voted_for))) >= 1
 
 
 

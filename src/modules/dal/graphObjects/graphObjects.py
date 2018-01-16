@@ -420,9 +420,9 @@ class User(GraphObject):
         elif self.score < 85:
             self.rank = Rank.Fifth.value
         elif self.score < 100:
-            self.rank = Rank.Sixth
+            self.rank = Rank.Sixth.value
         else:
-            self.rank = Rank.Seventh
+            self.rank = Rank.Seventh.value
 
 
     def changeResidency(self, graph, city):
