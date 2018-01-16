@@ -1,3 +1,6 @@
+import os
+import sys
+sys.path.append('/home/i_tavor/PoliticalCrowd1')
 import datetime
 import json
 import time
@@ -35,7 +38,7 @@ import random
 
 tags = ['טכנולוגיה', 'תרבות', 'כלכלה', 'ביטחון', 'פלילי', 'חיי אדם',
         'רפואה', 'סוציאליסטי', 'קפיטליסטי', 'ימני', 'שמאלני', 'דת',
-        'בני מיעוטים', 'איכות הסביבה', 'תשתיות', 'משאבי טבע', 'חינוך', 'מיסים', 'כללי']
+        'בני מיעוטים', 'איכות הסביבה', 'תשתיות', 'משאבי טבע', 'חינוך', 'מיסים']
 
 
 #
@@ -44,40 +47,48 @@ tags = ['טכנולוגיה', 'תרבות', 'כלכלה', 'ביטחון', 'פל�
 
 
 
-num_of_users = 50
-jobs = list(JobCategory.select(graph))
-cities = list(Residency.select(graph))
-parties = list(Party.select(graph))
-#laws=list(Law.select(graph))
+# num_of_users = 50
+# jobs = list(JobCategory.select(graph))
+# cities = list(Residency.select(graph))
+# parties = list(Party.select(graph))
+
+
+
+# job_lst =[]
+# city_lst =[]
+# party_lst = []
+# year_lst=[1980, 1960, 1990, 1930]
 #
-job_lst =[]
-city_lst =[]
-party_lst = []
-year_lst=[1980, 1960, 1990, 1930]
-
-for j in range(0,5):
-    party_lst.append(parties[j].name)
-
-i=0
-while len(job_lst) < 5:
-    if len(jobs[i].name) <= 6:
-        job_lst.append(jobs[i].name)
-    if len(cities[i].name) <= 6:
-        city_lst.append(cities[i].name)
+# for j in range(0,5):
+#     party_lst.append(parties[j].name)
+#
+# i=0
+# while len(job_lst) < 5:
+#     if len(jobs[i].name) <= 6:
+#         job_lst.append(jobs[i].name)
+#     if len(cities[i].name) <= 6:
+#         city_lst.append(cities[i].name)
+#     i+=1
 
 user_lst = list(User.select(graph))
-for i in range(0,num_of_users):
-    user_lst.append(User.createUser(graph, str(i), job_lst[i%5], year_lst[i%4], city_lst[i%5], InvolvementLevel.MEDIUM.value, party_lst[i%len(party_lst)]))
+# for i in range(0,num_of_users):
+#     user_lst.append(User.createUser(graph, str(i), job_lst[i%5], year_lst[i%4], city_lst[i%5], InvolvementLevel.MEDIUM.value, party_lst[i%len(party_lst)]))
 
-# limit_laws = 30
-# law_count=0
-# for law in laws:
-#     law_count += 1
-#     if law_count == limit_laws:
-#         break
-#     for user in user_lst:
-#         vote = random.choice([True, False])
-#         user.voteLaw(graph, law.name, vote)
-#         user.tagLaw(graph, law.name, [random.choice(tags)])
-#
-#
+
+laws = []
+s = graph.run("match(n:Law) return n order by n.timestamp limit 50")
+for e in list(s):
+    laws.append(Law.wrap(e[0]))
+
+limit_laws = 50
+law_count=0
+for law in laws:
+    law_count += 1
+    if law_count == limit_laws:
+        break
+    for user in user_lst:
+        vote = random.choice([True, False])
+        user.voteLaw(graph, law.name, vote)
+        user.tagLaw(graph, law.name, [random.choice(tags)])
+
+
