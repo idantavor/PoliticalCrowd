@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import logging
 
@@ -6,7 +6,6 @@ from src.modules.backend.bl import LawService
 from src.modules.backend.common.APIConstants import AgeRange, JOB_FOR, JOB_AGAINST, RESIDENT_FOR, RESIDENT_AGAINST, \
     AGE_FOR, AGE_AGAINST, SAME, DIFF, MEMBER_ABSENT, AGE, RESIDENCY, JOB, PARTY, BIRTH_YEAR, INVOLVEMENT_LEVEL
 from src.modules.dal.graphObjects.graphObjects import *
-import datetime
 from itertools import groupby
 
 logger = logging.getLogger(__name__)
@@ -93,14 +92,27 @@ def getUsersDistForLaw(graph, law_name):
 
 
 def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
+    today_timestamp = time.mktime(
+        datetime.strptime(
+            datetime.fromtimestamp(time.time()).date().strftime("%d/%m/%Y"),
+            "%d/%m/%Y")
+            .timetuple())
+    old_timestamp = time.mktime(
+        datetime.strptime(
+            (datetime.fromtimestamp(time.time()) - timedelta(days=45)).date().strftime("%d/%m/%Y"),
+            "%d/%m/%Y")
+            .timetuple())
+
+
     if tag == "כללי":
         tag = None
-    tag_match = "" if tag is None else f"AND t.name='{tag}' AND (l)-[:{TAGGED_AS}]->(t)"
+    tag_match = "" if tag is None else f"AND t.name='{tag}' AND (l:{Law.__name__})-[:{TAGGED_AS}]->(t:{Tag.__name__})"
 
     query_total_laws = f"MATCH (u:{User.__name__}), (l:{Law.__name__}), (t:{Tag.__name__}), (v:{Vote.__name__}) " \
                        f"WHERE u.token='{user_id}' {tag_match} " \
                        f"AND ((u)-[:{VOTED_FOR}]->(l) OR (u)-[:{VOTED_AGAINST}]->(l)) " \
                        f"AND (v)-[:{LAW}]->(l) " \
+                       f"AND {old_timestamp}<= l.timestamp <= {today_timestamp} " \
                        f"RETURN COUNT(DISTINCT (v))"
 
     num_of_total = float(list(graph.run(query_total_laws).data()[0].items())[0][1])
@@ -110,6 +122,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
                  f"AND (v)-[:{LAW}]->(l) AND " \
                  f"(((u)-[:{VOTED_FOR}]->(l) AND (v)-[:{ELECTED_VOTED_FOR}]->(e)) OR " \
                  f"((u)-[:{VOTED_AGAINST}]->(l) AND (v)-[:{ELECTED_VOTED_AGAINST}]->(e))) " \
+                 f"AND {old_timestamp}<= l.timestamp <= {today_timestamp} " \
                  f"RETURN COUNT(DISTINCT (v))"
 
     num_of_same = float(list(graph.run(query_same).data()[0].items())[0][1])
@@ -119,6 +132,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
                       f"AND (v)-[:{LAW}]->(l) AND " \
                       f"(((u)-[:{VOTED_FOR}]->(l) AND (v)-[:{ELECTED_VOTED_AGAINST}]->(e)) OR " \
                       f"((u)-[:{VOTED_AGAINST}]->(l) AND (v)-[:{ELECTED_VOTED_FOR}]->(e))) " \
+                      f"AND {old_timestamp}<= l.timestamp <= {today_timestamp} " \
                       f"RETURN COUNT(DISTINCT (v))"
 
     num_of_different = float(list(graph.run(query_different).data()[0].items())[0][1])
@@ -128,6 +142,7 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
                           f"AND (v)-[:{LAW}]->(l) AND " \
                           f"(((u)-[:{VOTED_FOR}]->(l) AND ((v)-[:{ELECTED_ABSTAINED}]->(e) OR (v)-[:{ELECTED_MISSING}]->(e))) OR " \
                           f"((u)-[:{VOTED_AGAINST}]->(l) AND ((v)-[:{ELECTED_ABSTAINED}]->(e) OR (v)-[:{ELECTED_MISSING}]->(e)))) " \
+                          f"AND {old_timestamp}<= l.timestamp <= {today_timestamp} " \
                           f"RETURN COUNT(DISTINCT (v))"
 
     num_of_member_absent = float(list(graph.run(query_member_absent).data()[0].items())[0][1])
@@ -141,9 +156,11 @@ def getUserMatchForOfficial(graph, user_id, member_name, tag=None):
 
 
 
-def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 100):
-    tag_query= f" AND t.name='{tag}'"
-    query = f"MATCH(u:{User.__name__})-[user_vote]->(l:{Law.__name__}){'' if tag is None else '<-[:{}]-(t:{})'.format(TAGGED_AS, Tag.__name__)} " \
+def getUserPartiesVotesMatchByTag(graph, user_id, tag ,num_of_laws_backwards = 15):
+    if tag == "כללי":
+        tag = None
+    tag_query = f" AND t.name='{tag}'"
+    query = f"MATCH(u:{User.__name__})-[user_vote]->(l:{Law.__name__}){'' if tag is None else '-[:{}]->(t:{})'.format(TAGGED_AS, Tag.__name__)} " \
             f"WHERE u.token='{user_id}'{'' if tag is None else tag_query} " \
             f"RETURN user_vote, l.name ORDER BY l.timestamp DESCENDING LIMIT {num_of_laws_backwards}"
 
