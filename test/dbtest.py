@@ -76,7 +76,7 @@ user_lst = list(User.select(graph))
 
 
 laws = []
-s = graph.run("match(n:Law) return n order by n.timestamp limit 50")
+s = graph.run("match(n:Law) return n order by n.timestamp descending limit 50")
 for e in list(s):
     laws.append(Law.wrap(e[0]))
 
