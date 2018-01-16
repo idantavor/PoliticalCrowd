@@ -15,7 +15,7 @@ def isUserExist(graph, user_token):
 
 
 def getUserAge(user_node):
-    curr_year = datetime.datetime.now().year
+    curr_year = datetime.now().year
     return curr_year - int(user_node.birth_year)
 
 
