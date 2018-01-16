@@ -18,7 +18,7 @@ from werkzeug.contrib.cache import SimpleCache
 import firebase_admin
 from firebase_admin import credentials
 
-
+ 
 #cred = credentials.Certificate(os.environ.get('API_KEY'))
 cred = credentials.Certificate("/home/i_tavor/conf/api-key/heimdall-2a8f9-firebase-adminsdk-qxkjy-43f80b0547.json")
 firebase_admin.initialize_app(cred)
